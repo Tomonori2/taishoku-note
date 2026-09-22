@@ -34,7 +34,7 @@ main{padding:0 16px;max-width:560px;margin:0 auto}
 .note{background:var(--main-soft);border-radius:12px;padding:10px 12px;font-size:15px;margin-top:10px}
 .note.warn{background:var(--warn-soft)}
 label.f{display:block;margin:10px 0 2px;font-size:14px;color:var(--sub)}
-input[type=number],input[type=text],input[type=date],textarea{width:100%;font:inherit;padding:10px 12px;
+input[type=number],input[type=text],input[type=date],input[type=month],input[type=password],textarea{width:100%;font:inherit;padding:10px 12px;
   border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
 .unit{display:flex;align-items:center;gap:8px}.unit span{white-space:nowrap;color:var(--sub)}
 button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--main);color:#fff;font-weight:700;cursor:pointer}
@@ -60,6 +60,17 @@ nav button.on{color:var(--main);background:var(--main-soft)}
 section{display:none}section.on{display:block}
 .ver{text-align:center;color:var(--sub);font-size:12px;margin:18px 0}
 .empty{color:var(--sub);font-size:15px}
+.chart{width:100%;height:auto;display:block;margin-top:10px}
+.chart text{font-size:11px;fill:var(--sub)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:4px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--main);vertical-align:middle;margin-right:4px}
+.legend i.b{border-top-style:dashed;border-color:#c98a2e}
+.legend i.r{border-top:2px dashed var(--warn)}
+.msg{border-radius:14px;padding:10px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-word;font-size:16px}
+.msg.me{background:var(--main);color:#fff;margin-left:40px}
+.msg.bot{background:var(--card);border:1px solid var(--line);margin-right:12px}
+.msg.wait{color:var(--sub)}
+.msg .todoAdd{display:block;margin-top:8px;white-space:normal;text-align:left}
 </style>
 </head>
 <body>
@@ -68,6 +79,17 @@ section{display:none}section.on{display:block}
 
 <!-- ホーム -->
 <section id="home" class="on">
+  <div class="card" id="welcome" hidden>
+    <h2>ようこそ 🌅</h2>
+    <div>退職の前後の<b>お金</b>と<b>準備</b>を、1か所で見るノートです。</div>
+    <ol style="margin:8px 0;padding-left:22px">
+      <li>「設定」で退職の日を入れる（未定のままでも使えます）</li>
+      <li>「お金」で数字を入れると、足りるかどうかが出ます</li>
+      <li>「やること」に、退職の前後の手続きが入っています</li>
+    </ol>
+    <div class="note">🔒 入れた数字や記録は、この端末の中だけに保存されます。作った人にも、だれにも送られません（「相談」でAIに送ると決めたときだけ、Googleに送ります）。</div>
+    <div style="margin-top:10px"><button id="welcomeOk">はじめる</button></div>
+  </div>
   <div class="card" id="cdCard">
     <h2 id="cdTitle">退職の日まで</h2>
     <div class="big" id="cdDays">–</div>
@@ -90,21 +112,56 @@ section{display:none}section.on{display:block}
 <section id="money">
   <div class="card" id="moneyResult"></div>
   <div class="card">
-    <h2>数字を入れる（単位：万円）</h2>
-    <div class="sub">入れた数字はこのスマホの中だけに保存されます。どこにも送りません。</div>
-    <label class="f">いまの資産</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
+    <h2>まずはこれだけ（単位：万円）</h2>
+    <div class="sub">入れた数字はこの端末の中だけに保存されます。どこにも送りません。だいたいの数字でかまいません。</div>
+    <label class="f">はたらき方</label>
+    <select data-m="job" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
+      <option value="">えらぶ</option><option>会社員</option><option>公務員</option><option>自営業・フリーランス</option><option>パート・アルバイト</option><option>その他</option>
+    </select>
+    <label class="f">生まれた年と月</label>
+    <input type="month" data-m="birth">
+    <div class="sub" id="ageNote"></div>
+    <label class="f">いまの資産（貯金・投資などの合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
     <label class="f">ひと月の生活費</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
     <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension"><span>万円/月</span></div>
-    <label class="f">退職手当の見込み</label><div class="unit"><input type="number" inputmode="decimal" data-m="severance"><span>万円</span></div>
+    <details class="sub" style="margin-top:4px"><summary>年金の額はどこで分かる？</summary>
+      毎年誕生月に届く「ねんきん定期便」か、ネットの「ねんきんネット」で分かります。50歳以上は「このまま働いた場合の見込み額」、50歳未満は「これまでの加入実績の額」が書かれています（50歳未満の額は実際より少なめに出ます）。年額なので12で割って入れてください。</details>
+    <label class="f">退職金・退職手当の見込み（手取り）</label><div class="unit"><input type="number" inputmode="decimal" data-m="severance"><span>万円</span></div>
+    <details class="sub" style="margin-top:4px"><summary>手取りって、税金はどのくらい？</summary>
+      退職金には「退職所得控除」という大きな非課税の枠があり、長く勤めた人ほど税金はほとんどかからないことが多いです。勤め先から聞いた額が税金を引く前（額面）なら、「手取りだといくらか」も聞いておくと確実です。</details>
+  </div>
+  <details class="card" id="moreBox">
+    <summary style="font-weight:700;cursor:pointer">くわしく入れる（入れるとより正確に）</summary>
+    <label class="f">そのほか入ってくるお金（失業給付・企業年金の一時金など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="otherIn"><span>万円</span></div>
+    <label class="f">退職後に働いて得るお金（年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work"><span>万円/月</span></div>
     <label class="f">もしもの予備</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
     <label class="f">退職翌年の住民税</label><div class="unit"><input type="number" inputmode="decimal" data-m="tax"><span>万円</span></div>
     <label class="f">そのほか一度だけ出るお金（車・家の修理など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="oneTime"><span>万円</span></div>
-    <label class="f">退職するときの年齢</label><div class="unit"><input type="number" inputmode="numeric" data-m="age"><span>歳</span></div>
-    <label class="f">年金がもらえ始める年齢</label><div class="unit"><input type="number" inputmode="numeric" data-m="pensionAge"><span>歳</span></div>
+    <label class="f">年金を受け取りはじめる年齢（60〜75歳）</label><div class="unit"><input type="number" inputmode="numeric" min="60" max="75" data-m="pensionAge"><span>歳</span></div>
+    <div class="sub" id="penNote"></div>
+    <label class="f">物価の上がり方</label>
+    <select data-m="infl" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
+      <option value="0">考えない</option><option value="1">年1%上がる</option><option value="2">年2%上がる</option>
+    </select>
+    <div class="sub">生活費が毎年この割合で上がる計算にします。年金も上がりますが、物価ほどは上がらない仕組みがあるため、物価より年0.5%低い上がり方で計算します（目安）。</div>
     <label class="f">何歳までを考えるか</label><div class="unit"><input type="number" inputmode="numeric" data-m="lifeAge"><span>歳</span></div>
+    <label class="f">生まれた年月を入れない場合：退職するときの年齢</label><div class="unit"><input type="number" inputmode="numeric" data-m="age"><span>歳</span></div>
+  </details>
+  <div class="card">
+    <h2>もうひとつの日とくらべる</h2>
+    <div class="sub">退職の日がずれたら、余白がどう変わるかを並べます。</div>
+    <label class="f">くらべる日（例：1年あと）</label>
+    <input type="date" data-c="date">
+    <label class="f">働いている間の手取り（1年あたり）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
+    <label class="f">その日に辞めたときの退職金・手取り（空なら上と同じ）</label><div class="unit"><input type="number" inputmode="decimal" data-c="severance"><span>万円</span></div>
+    <div id="cmpResult" style="margin-top:12px"></div>
+  </div>
+  <div class="card">
+    <h2>年金を受け取りはじめる年齢でくらべる</h2>
+    <div id="penCmp"></div>
   </div>
   <div class="card sub">
-    ※ 運用で増える分・物価が上がる分は入れていない、かための計算です。<br>
+    ※ 運用で増える分は入れていない、かための計算です。物価は「くわしく入れる」で選べます。<br>
     ※ 自分の数字を足し算・引き算しているだけで、投資のすすめではありません。
   </div>
 </section>
@@ -112,7 +169,7 @@ section{display:none}section.on{display:block}
 <!-- やること -->
 <section id="todo">
   <div class="card">
-    <h2>退職までにやること</h2>
+    <h2>退職の前後にやること</h2>
     <div id="todoList"></div>
     <div class="add">
       <input type="text" id="todoText" placeholder="やることを書く" maxlength="100">
@@ -123,6 +180,28 @@ section{display:none}section.on{display:block}
   <div class="card" id="doneCard" hidden>
     <h2>おわったこと</h2>
     <div id="doneList"></div>
+  </div>
+</section>
+
+<!-- 相談 -->
+<section id="ai">
+  <div class="card">
+    <h2>退職の相談（AI）</h2>
+    <div class="sub">年金・健康保険・退職金の仕組みや、迷っていることの整理を手伝います。「辞めるべき」は決めません。考える材料と、確かめる先をお返しします。</div>
+    <div id="aiNoKey" class="note warn" hidden>使うには Google の Gemini の「APIキー」が要ります（無料で取れます）。「設定」で入れてください。キーが無くても、ほかの画面はすべて使えます。</div>
+  </div>
+  <div id="chat"></div>
+  <div class="card">
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:15px">
+      <input type="checkbox" id="aiWithData" style="width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--main)">
+      <span>自分の数字（お金・退職の日）もAIに伝える</span>
+    </label>
+    <div class="sub" style="margin:4px 0 0 30px">無料のキーでは、送った内容がGoogleのサービス改善に使われることがあります。伝えたくなければチェックを外したままにしてください。</div>
+    <details class="sub" style="margin:4px 0 0 30px" id="aiPreviewBox"><summary>送る内容を見る</summary><pre id="aiPreview" style="white-space:pre-wrap;font:inherit;margin:4px 0"></pre></details>
+    <textarea id="aiText" rows="3" style="margin-top:10px" placeholder="例：60歳で辞めたら、健康保険はどれがいい？" maxlength="800"></textarea>
+    <div class="add"><button id="aiSend">相談する</button> <button class="ghost small" id="aiReset">はじめから</button></div>
+    <div class="sub" style="margin-top:6px">⚠️ 勤め先の人の名前や、職場の内部の事情は書かないでください。<br>※ AIはまちがえることがあります。大事なことは、答えの最後に出る「確認先」で確かめてください。投資のすすめはしません。</div>
+    <div class="add" id="aiExamples"></div>
   </div>
 </section>
 
@@ -143,7 +222,14 @@ section{display:none}section.on{display:block}
     <input type="date" id="retireDate">
     <label class="f">数えはじめの日（進みぐあいのバーの起点）</label>
     <input type="date" id="startDate">
-    <div style="margin-top:10px"><button id="dateSave">保存する</button> <span class="sub" id="dateSaved"></span></div>
+    <div class="add"><button id="dateSave">保存する</button> <button class="ghost" id="dateClear">未定にする</button> <span class="sub" id="dateSaved"></span></div>
+    <div class="sub" style="margin-top:6px">「お金」で生まれた年と月を入れておくと、退職の日を変えたとき年齢も自動で合います。</div>
+  </div>
+  <div class="card">
+    <h2>AI相談のキー（Gemini）</h2>
+    <div class="sub">「相談」タブを使うときだけ必要です。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> で無料で作れます。キーはこの端末の中だけに保存し、控え（バックアップ）にも入れません。</div>
+    <input type="password" id="keyIn" placeholder="AIza… で始まる文字" autocomplete="off" style="margin-top:8px">
+    <div class="add"><button id="keySave">保存する</button> <button class="ghost" id="keyDel">キーを消す</button> <span class="sub" id="keyMsg"></span></div>
   </div>
   <div class="card">
     <h2>データの控え（バックアップ）</h2>
@@ -171,12 +257,13 @@ section{display:none}section.on{display:block}
   <button data-tab="home" class="on"><span class="i">🏠</span>ホーム</button>
   <button data-tab="money"><span class="i">💴</span>お金</button>
   <button data-tab="todo"><span class="i">✅</span>やること</button>
+  <button data-tab="ai"><span class="i">💬</span>相談</button>
   <button data-tab="day"><span class="i">☀️</span>理想の1日</button>
   <button data-tab="set"><span class="i">⚙️</span>設定</button>
 </nav>
 
 <script>
-const VERSION = 'v1.0';
+const VERSION = 'v2.5';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -197,21 +284,28 @@ function monthsDays(from,to){
 function jpDate(s){ const d=parseYmd(s); if(!d) return ''; return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
 
 // ---------- 保存 ----------
+// rel ＝ 退職の日から何日前（−）・何日後（＋）が期限か。退職の日が決まると日付になる
 const DEFAULT_TODOS = [
-  'ねんきんネットで年金の見込み額を確かめる',
-  '退職手当の見込み額を確かめる',
-  '退職翌年の住民税のぶんの現金を分けておく',
-  '退職後の健康保険をどれにするか決める（任意継続・国保・家族の扶養）',
-  '家族の扶養に入れるか、条件を確かめる',
-  '国民年金の手続きを調べる（第1号か第3号か）',
+  ['ねんきん定期便・ねんきんネットで年金の見込み額を確かめる', -180],
+  ['退職金（退職手当）の見込み額と受け取り方を勤め先に確かめる', -120],
+  ['家族の扶養に入れるか、条件を確かめる', -60],
+  ['退職の翌年にかかる住民税のぶんの現金を分けておく', -30],
+  ['退職後の健康保険を決める（任意継続・国保・家族の扶養。任意継続は退職の翌日から20日以内に申し込み）', 20],
+  ['国民年金の手続きを確かめる（60歳前に辞める場合。退職後14日以内に市区町村で）', 14],
+  ['失業給付を受けられるか確かめる（会社員の場合。公務員は原則ありません）', null],
 ];
+function addDays(s,n){ const d=parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); }
+function dueOf(x){ return x.due || (x.rel!=null && parseYmd(data.retireDate) ? addDays(data.retireDate, x.rel) : ''); }
+function relText(n){ return n<0 ? `退職の日の${-n}日前` : n>0 ? `退職の日の${n}日後` : '退職の日'; }
 // 例文（公開されるので本人の暮らしは書かない。自分の1日は画面で書きかえる）
-const DEFAULT_DAY = ['起きる','体を動かす','好きなことに打ちこむ','家族や友だちとの時間'];
+const JOBS = ['会社員','公務員','自営業・フリーランス','パート・アルバイト','その他'];
+const DEFAULT_DAY =['起きる','体を動かす','好きなことに打ちこむ','家族や友だちとの時間'];
 
 function blank(){
   return { v:1, retireDate:'', startDate:todayYmd(),
-    money:{assets:'',living:'',pension:'',severance:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90},
-    todos: DEFAULT_TODOS.map((t,i)=>({id:Date.now()+i, text:t, due:'', done:false, doneAt:''})),
+    money:{job:'',birth:'',assets:'',living:'',pension:'',severance:'',otherIn:'',work:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90,infl:0},
+    cmp:{date:'',income:'',severance:''},
+    todos: DEFAULT_TODOS.map(([t,rel],i)=>({id:Date.now()+i, text:t, due:'', rel, done:false, doneAt:''})),
     day: DEFAULT_DAY.slice() };
 }
 let data;
@@ -220,36 +314,127 @@ function load(){
   const b=blank();
   for(const k of Object.keys(b)) if(data[k]===undefined) data[k]=b[k];
   data.money = Object.assign({}, b.money, data.money||{});
+  data.cmp = Object.assign({}, b.cmp, data.cmp||{});
+  // 前の版で入った「最初のやること」にも、あとから期限の目安をつける（自分で期限を入れたものは触らない）
+  for(const x of data.todos){
+    if(x.rel!==undefined || x.due) continue;
+    const hit=DEFAULT_TODOS.find(([t])=>t.slice(0,12)===String(x.text).slice(0,12));
+    if(hit && hit[1]!=null) x.rel=hit[1];
+  }
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){ alert('保存できませんでした。ブラウザの設定を確認してください。'); } }
 
 // ---------- お金の計算 ----------
 function num(v){ const n=parseFloat(v); return isFinite(n)?n:0; }
+// 退職のときの年齢：生まれた年月があれば退職の日から計算（未定ならいまの年齢）。無ければ手入力の年齢
+function birthOk(m){ return /^\d{4}-\d{2}$/.test(m.birth||''); }
+function ageOf(m){
+  if(m.ageOverride!=null) return m.ageOverride;
+  if(birthOk(m)){ const at=parseYmd(data.retireDate)?data.retireDate:todayYmd(); return daysBetween(m.birth+'-01',at)/365.25; }
+  return num(m.age);
+}
+// 年金を受け取りはじめる年齢による増減（65歳が基準）。
+// 早める（繰上げ）と1か月0.4%減、遅らせる（繰下げ）と1か月0.7%増。60〜75歳。
+function clampPA(p){ return Math.min(75, Math.max(60, num(p)||65)); }
+function pensionFactor(p){ p=clampPA(p); return p<65 ? 1-0.004*12*(65-p) : 1+0.007*12*(p-65); }
+function pensionMonthly(m){ return num(m.pension)*pensionFactor(m.pensionAge); }
+// いまの年齢（物価は「いま」から上がっていく前提なので、その起点）
+function yearsToRetire(){ return parseYmd(data.retireDate) ? Math.max(0, daysBetween(todayYmd(), data.retireDate)/365.25) : 0; }
+function nowAge(){ return ageOf(data.money) - yearsToRetire(); }
+function lumpIn(m){ return num(m.severance)+num(m.otherIn)-num(m.tax)-num(m.oneTime); }
+
+// 退職の日から「何歳まで」を1か月ずつ追いかける。calc もグラフもここを通る。
+//   年金まで：生活費 − 働いて得るお金
+//   年金から：生活費 − 年金（受け取りはじめる年齢で増減）
+//   物価：生活費は選んだ割合で毎年上がる。年金は物価より年0.5%低い上がり方（目安）
+function run(m, opt){
+  opt=opt||{};
+  const living = opt.living!==undefined ? opt.living : num(m.living);
+  const a=ageOf(m), p=clampPA(m.pensionAge), L=Math.max(a, num(m.lifeAge));
+  const g=num(m.infl)/100, pg=Math.max(0,g-0.005), base=nowAge(), pen=pensionMonthly(m), work=num(m.work);
+  const A0 = opt.A0!==undefined ? opt.A0 : num(m.assets)+lumpIn(m);
+  const res=num(m.reserve), dt=1/12;
+  let bridge=0, after=0, asset=A0, zero=null, under=res>0&&A0<res ? a : null;
+  if(A0<0) zero=a;
+  const pts=[[a,A0]]; let nextMark=Math.floor(a)+1;
+  const pP=Math.max(a,Math.min(p,L));
+  for(const [s,e,isAfter] of [[a,pP,false],[pP,L,true]]){
+    for(let x=s; x<e-1e-9; ){
+      const h=Math.min(dt, e-x), t=Math.max(0, x+h/2-base);
+      const liv=living*Math.pow(1+g,t);
+      const cost = isAfter ? Math.max(0, liv-pen*Math.pow(1+pg,t))*12*h : Math.max(0, liv-work)*12*h;
+      if(isAfter) after+=cost; else bridge+=cost;
+      const prev=asset; asset-=cost; x+=h;
+      if(zero==null && prev>=0 && asset<0) zero = x-h + h*(prev/(prev-asset||1));
+      if(under==null && res>0 && prev>=res && asset<res) under = x-h + h*((prev-res)/(prev-asset||1));
+      if(x>=nextMark-1e-9 || x>=e-1e-9){ pts.push([x,asset]); nextMark=Math.floor(x+1e-9)+1; }
+    }
+  }
+  return {bridge, after, bridgeYears:pP-a, afterYears:L-pP, pts, end:asset, zero, under, L};
+}
 function calc(m, livingOverride){
+  const r=run(m, {living:livingOverride});
   const living = livingOverride!==undefined ? livingOverride : num(m.living);
-  const age=num(m.age), pAge=num(m.pensionAge), lAge=num(m.lifeAge);
-  const bridgeYears = Math.max(0, pAge-age);
-  const afterYears  = Math.max(0, lAge-Math.max(pAge,age));
-  const bridge = living*12*bridgeYears;
-  const gapMonthly = Math.max(0, living-num(m.pension));
-  const after = gapMonthly*12*afterYears;
-  const need = bridge + after + num(m.reserve) + num(m.tax) + num(m.oneTime) - num(m.severance);
-  return {bridgeYears, afterYears, bridge, gapMonthly, after, need, margin:num(m.assets)-need};
+  const bridgeMonthly = Math.max(0, living-num(m.work));  // 働いて得る分は生活費から引く（いまの値段で）
+  const gapMonthly = Math.max(0, living-pensionMonthly(m));
+  const need = r.bridge + r.after + num(m.reserve) + num(m.tax) + num(m.oneTime) - num(m.severance) - num(m.otherIn);
+  return {bridgeYears:r.bridgeYears, afterYears:r.afterYears, bridgeMonthly, bridge:r.bridge, gapMonthly, after:r.after, need, margin:num(m.assets)-need};
 }
 function man(n){ const r=Math.round(n); return (r<0?'−':'')+Math.abs(r).toLocaleString('ja-JP')+'万円'; }
-function moneyReady(m){ return num(m.living)>0 && num(m.age)>0 && m.assets!=='' ; }
+function missing(m){
+  const L=[];
+  if(!(ageOf(m)>0)) L.push('生まれた年と月');
+  if(m.assets===''||m.assets==null) L.push('いまの資産');
+  if(!(num(m.living)>0)) L.push('ひと月の生活費');
+  return L;
+}
+function moneyReady(m){ return missing(m).length===0; }
+function renderPenNote(){
+  const m=data.money, p=clampPA(m.pensionAge), f=pensionFactor(p);
+  const t = p===65 ? '65歳が基準です。早めると1か月ごとに0.4%減り、遅らせると0.7%増えます。'
+    : `${p}歳からだと、65歳より ${p<65?'':'+'}${((f-1)*100).toFixed(1)}%。`+(num(m.pension)>0?`上の年金はひと月 ${pensionMonthly(m).toFixed(1)}万円 として計算します。`:'');
+  $('penNote').textContent = t + (num(m.pensionAge)&&num(m.pensionAge)!==p ? `（${p}歳として計算しています）` : '');
+}
+function renderPenCompare(){
+  const box=$('penCmp'); box.textContent='';
+  const m=data.money;
+  if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='上の「まずはこれだけ」を入れると出ます。'; box.append(p); return; }
+  if(!(num(m.pension)>0)){ const p=document.createElement('div'); p.className='empty'; p.textContent='年金の額を入れると、くらべられます。'; box.append(p); return; }
+  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 12px;font-size:15px';
+  const cell=(t,cls,bold)=>{ const d=document.createElement('div'); d.textContent=t; if(cls) d.className=cls; if(bold) d.style.fontWeight='800'; grid.append(d); return d; };
+  cell('はじめる年齢','sub'); cell('年金（ひと月）','sub').style.textAlign='right'; cell(`${num(m.lifeAge)}歳のとき`,'sub').style.textAlign='right';
+  const cur=clampPA(m.pensionAge);
+  for(const p of [60,65,70,75]){
+    const m2=Object.assign({}, m, {pensionAge:p}), l=run(m2), me=p===cur;
+    cell(p+'歳'+(me?'（いま）':''), '', me);
+    cell(pensionMonthly(m2).toFixed(1)+'万円','',me).style.textAlign='right';
+    cell(l.zero!=null ? `${Math.floor(l.zero)}歳で0に` : man(l.end), l.zero!=null?'minus':'', me).style.textAlign='right';
+  }
+  box.append(grid);
+  const s=document.createElement('div'); s.className='sub'; s.style.marginTop='8px';
+  s.textContent='※ 遅らせるほど1回の額は増えますが、もらえる期間は短くなります。長生きするほど遅らせた方が有利、という比べ方です。家族の分もまとめて同じ年齢で計算しています。';
+  box.append(s);
+}
+function renderAgeNote(){
+  const m=data.money, el=$('ageNote');
+  if(!birthOk(m)){ el.textContent=''; return; }
+  const a=Math.floor(ageOf(m));
+  el.textContent = parseYmd(data.retireDate) ? `退職の日（${jpDate(data.retireDate)}）には ${a}歳です。` : `いま ${a}歳です（退職の日が未定なので、いまの年齢で計算します）。`;
+}
 
 function renderMoney(){
   const m=data.money, box=$('moneyResult'); box.textContent='';
   const h=document.createElement('h2'); h.textContent='足りるかどうか'; box.append(h);
-  if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下に「いまの資産」「ひと月の生活費」「退職するときの年齢」を入れると計算します。'; box.append(p); return; }
-  const c=calc(m), up=calc(m, num(m.living)+1);
+  renderAgeNote(); renderPenNote(); renderPenCompare();
+  if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下の「'+missing(m).join('」「')+'」を入れると計算します。年金と退職金も入れると、より正確になります。'; box.append(p); return; }
+  const c=calc(m), up=calc(m, num(m.living)+1), infl=num(m.infl)>0;
   const rows=[
-    [`年金までの生活費（${c.bridgeYears}年）`, man(c.bridge)],
-    [c.gapMonthly>0?`年金で足りない分（月${man(c.gapMonthly)}×${c.afterYears}年）`:'年金が始まったあと', c.gapMonthly>0?man(c.after):'年金でまかなえる'],
+    // 物価を入れたときは「月○×○年」のかけ算にならないので、年数だけ出す
+    [infl ? `年金までの生活費（${+c.bridgeYears.toFixed(1)}年・物価こみ）` : num(m.work)>0 ? `年金までの生活費（働く分を引いて月${man(c.bridgeMonthly)}×${+c.bridgeYears.toFixed(1)}年）` : `年金までの生活費（${+c.bridgeYears.toFixed(1)}年）`, man(c.bridge)],
+    [c.after>0 ? (infl ? `年金で足りない分（${+c.afterYears.toFixed(1)}年・物価こみ）` : `年金で足りない分（月${man(c.gapMonthly)}×${+c.afterYears.toFixed(1)}年）`) : '年金が始まったあと', c.after>0?man(c.after):'年金でまかなえる'],
     ['もしもの予備', man(num(m.reserve))],
     ['住民税・一度だけのお金', man(num(m.tax)+num(m.oneTime))],
-    ['退職手当（入ってくる）', '−'+man(num(m.severance)).replace('−','')],
+    ['退職金・入ってくるお金', '−'+man(Math.abs(num(m.severance)+num(m.otherIn)))],
   ];
   for(const [a,b] of rows){ const r=document.createElement('div'); r.className='row'; const s=document.createElement('span'); s.textContent=a; const v=document.createElement('b'); v.textContent=b; r.append(s,v); box.append(r); }
   const tot=document.createElement('div'); tot.className='row'; tot.innerHTML='<span>必要なお金</span>'; const tb=document.createElement('b'); tb.textContent=man(c.need); tot.append(tb); box.append(tot);
@@ -257,6 +442,7 @@ function renderMoney(){
   big.innerHTML='<div class="sub">いまの資産との差（余白）</div>';
   const bv=document.createElement('div'); bv.className='big '+(c.margin>=0?'plus':'minus'); bv.style.fontSize='40px'; bv.textContent=(c.margin>=0?'+':'')+man(c.margin);
   big.append(bv); box.append(big);
+  renderChart(box);
   const n=document.createElement('div'); n.className='note'+(c.margin<0?' warn':'');
   n.textContent = c.margin>=0
     ? `いまの計画なら、あと ${man(c.margin)} の余白があります。`
@@ -267,6 +453,100 @@ function renderMoney(){
   box.append(s);
 }
 
+// ---------- 2つの日をくらべる ----------
+// 考え方：いまの資産のまま「退職の日」を迎えるとして、くらべる日まで働くと
+//   ・その間の手取り − 生活費 のぶん資産がふえる（早めるなら減る）
+//   ・年齢が進むので、年金までの生活費がへる
+//   ・退職手当が変わることがある
+function compare(){
+  const m=data.money, c=data.cmp, A=data.retireDate, B=c.date;
+  if(!parseYmd(A)) return {msg:'「設定」で退職の日を入れると、くらべられます（未定のままだと起点がありません）。'};
+  if(!parseYmd(B)) return {msg:'くらべる日を入れると、ここに並べて出します。'};
+  if(!moneyReady(m)) return {msg:'上の「まずはこれだけ」を先に入れてください。'};
+  if(c.income==='' ) return {msg:'働いている間の手取り（1年あたり）を入れてください。'};
+  const y = daysBetween(A,B)/365.25;
+  if(Math.abs(y)<1/365) return {msg:'2つの日が同じです。'};
+  const a = calc(m);
+  const ageA = ageOf(m);
+  const mB = Object.assign({}, m, {ageOverride:ageA+y, severance: c.severance===''?m.severance:c.severance});
+  const b = calc(mB);
+  const saved = (num(c.income)-num(m.living)*12)*y;  // 働いて残る（へる）ぶん
+  const marginB = num(m.assets)+saved-b.need;
+  return {y, a, b, saved, marginA:a.margin, marginB, ageA, ageB:ageA+y, mB};
+}
+function renderCompare(){
+  const box=$('cmpResult'); box.textContent='';
+  const r=compare();
+  if(r.msg){ const p=document.createElement('div'); p.className='empty'; p.textContent=r.msg; box.append(p); return; }
+  const yTxt = Math.abs(r.y).toFixed(1)+'年';
+  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;font-size:15px';
+  const cell=(t,cls)=>{ const d=document.createElement('div'); d.textContent=t; if(cls) d.className=cls; grid.append(d); };
+  cell(''); cell('退職の日','sub'); cell('くらべる日','sub');
+  cell('日付'); cell(jpDate(data.retireDate)); cell(jpDate(data.cmp.date));
+  cell('退職のときの年齢'); cell(Math.floor(r.ageA)+'歳'); cell(Math.floor(r.ageB)+'歳');
+  cell('年金までの年数'); cell(r.a.bridgeYears.toFixed(1)+'年'); cell(r.b.bridgeYears.toFixed(1)+'年');
+  cell('必要なお金'); cell(man(r.a.need)); cell(man(r.b.need));
+  cell(r.y>0?'働いて残るお金':'早めて減るお金'); cell('—'); cell((r.saved>=0?'+':'')+man(r.saved));
+  cell('余白','') ; cell((r.marginA>=0?'+':'')+man(r.marginA), r.marginA>=0?'plus':'minus'); cell((r.marginB>=0?'+':'')+man(r.marginB), r.marginB>=0?'plus':'minus');
+  [...grid.children].forEach((d,i)=>{ if(i%3) d.style.textAlign='right'; if(i>=grid.children.length-3) d.style.fontWeight='800'; });
+  box.append(grid);
+  const diff=r.marginB-r.marginA, n=document.createElement('div'); n.className='note';
+  n.textContent = (r.y>0 ? `${yTxt}長く働くと、` : `${yTxt}早めると、`) + `余白は ${diff>=0?'+':'−'}${man(Math.abs(diff))} 変わります`
+    + `（${r.y>0?'働いて残る':'減る'}ぶん ${man(Math.abs(r.saved))}／必要なお金 ${r.b.need<=r.a.need?'−':'+'}${man(Math.abs(r.b.need-r.a.need))}）。`;
+  box.append(n);
+  const s=document.createElement('div'); s.className='sub'; s.style.marginTop='6px';
+  s.textContent='※ いまの資産のまま「退職の日」を迎える前提です。お金は余白の一面で、体や家族の時間は数字に入っていません。';
+  box.append(s);
+}
+
+// ---------- 資産の移りかわり（グラフ） ----------
+// run() の結果をそのまま使う。最後に残る額 − 予備 ＝ 余白（calc と一致）。
+function lifeA(){ return run(data.money); }
+function lifeB(r){ return run(r.mB, {A0: num(r.mB.assets)+r.saved+lumpIn(r.mB)}); }
+function lifeText(l){
+  const res=num(data.money.reserve);
+  if(l.zero!=null) return `${Math.floor(l.zero)}歳ごろに資産が0になります。`;
+  if(res>0 && l.under!=null) return `${Math.floor(l.under)}歳ごろに、もしもの予備（${man(res)}）を使いはじめます。`;
+  return `${l.L}歳まで持ちます（${l.L}歳で ${man(l.end)} 残る計算）。`;
+}
+function drawChart(A, B){
+  const NS='http://www.w3.org/2000/svg', W=320, H=190, pl=46, pr=10, pt=10, pb=24;
+  const all=A.pts.concat(B?B.pts:[]), res=num(data.money.reserve);
+  const x0=Math.min(...all.map(p=>p[0])), x1=Math.max(...all.map(p=>p[0]));
+  let y0=Math.min(0,...all.map(p=>p[1])), y1=Math.max(res,...all.map(p=>p[1]))*1.08||1;
+  const X=x=>pl+(x-x0)/((x1-x0)||1)*(W-pl-pr), Y=y=>pt+(y1-y)/((y1-y0)||1)*(H-pt-pb);
+  const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.setAttribute('class','chart');
+  svg.setAttribute('role','img'); svg.setAttribute('aria-label','年齢ごとの資産のグラフ。'+lifeText(A));
+  const el=(tag,attrs,text)=>{ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!=null) e.textContent=text; svg.append(e); return e; };
+  const short=n=>(Math.round(n/100)*100).toLocaleString('ja-JP')+'万';
+  el('line',{x1:pl,x2:W-pr,y1:Y(0),y2:Y(0),stroke:'var(--line)','stroke-width':1.5});
+  if(res>0) el('line',{x1:pl,x2:W-pr,y1:Y(res),y2:Y(res),stroke:'var(--warn)','stroke-width':1.2,'stroke-dasharray':'4 3'});
+  el('text',{x:pl-4,y:Y(0)+4,'text-anchor':'end'},'0');
+  el('text',{x:pl-4,y:pt+8,'text-anchor':'end'},short(y1/1.08));
+  const pts=l=>l.pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
+  const base=Y(Math.max(0,y0));
+  el('polygon',{points:`${X(A.pts[0][0])},${base} ${pts(A)} ${X(A.pts.at(-1)[0])},${base}`,fill:'var(--main)',opacity:.12});
+  el('polyline',{points:pts(A),fill:'none',stroke:'var(--main)','stroke-width':3,'stroke-linejoin':'round'});
+  if(B) el('polyline',{points:pts(B),fill:'none',stroke:'#c98a2e','stroke-width':2.5,'stroke-dasharray':'6 4'});
+  // 年齢の目もり：はじめ・年金・おわり（重なるものは出さない）
+  const ticks=[x0, clampPA(data.money.pensionAge), x1].filter((v,i,arr)=>v>=x0&&v<=x1&&arr.findIndex(w=>Math.abs(X(w)-X(v))<24)===i);
+  ticks.forEach((v,i)=>el('text',{x:X(v),y:H-6,'text-anchor':'middle'},(i===0?Math.floor(v):Math.round(v))+'歳'));
+  return svg;
+}
+function renderChart(box){
+  const A=lifeA(), r=compare(), B=r.msg?null:lifeB(r);
+  box.append(drawChart(A,B));
+  const lg=document.createElement('div'); lg.className='legend';
+  const item=(cls,t)=>{ const s=document.createElement('span'); const i=document.createElement('i'); if(cls) i.className=cls; s.append(i,t); lg.append(s); };
+  item('', parseYmd(data.retireDate)?'退職の日に辞めた場合':'いま辞めた場合');
+  if(B) item('b', jpDate(data.cmp.date)+'に辞めた場合');
+  if(num(data.money.reserve)>0) item('r','もしもの予備');
+  box.append(lg);
+  const n=document.createElement('div'); n.className='note'+(A.zero!=null?' warn':''); n.textContent='📈 '+lifeText(A);
+  if(B) n.textContent+=`\n📅 ${jpDate(data.cmp.date)}に辞めると：`+lifeText(B);
+  n.style.whiteSpace='pre-wrap'; box.append(n);
+}
+
 function renderHomeMoney(){
   const box=$('homeMoney'); box.textContent='';
   const h=document.createElement('h2'); h.textContent='お金の余白'; box.append(h);
@@ -274,13 +554,24 @@ function renderHomeMoney(){
   const c=calc(data.money);
   const v=document.createElement('div'); v.className='big '+(c.margin>=0?'plus':'minus'); v.style.fontSize='36px'; v.textContent=(c.margin>=0?'+':'')+man(c.margin);
   const s=document.createElement('div'); s.className='sub'; s.textContent=`必要なお金 ${man(c.need)} ／ 生活費は月${man(num(data.money.living))}`;
-  box.append(v,s);
+  const l=lifeA(), lt=document.createElement('div'); lt.style.cssText='margin-top:6px;font-weight:600'+(l.zero!=null?';color:var(--warn)':'');
+  lt.textContent='📈 '+lifeText(l);
+  box.append(v,s,lt);
+  // くらべる日を入れている人にだけ、1行で結果を出す
+  const r=compare();
+  if(!r.msg){
+    const diff=r.marginB-r.marginA, b=document.createElement('button');
+    b.className='ghost'; b.style.cssText='display:block;width:100%;text-align:left;margin-top:10px;font-weight:600';
+    b.textContent=`📅 ${jpDate(data.cmp.date)}に辞めると ${(r.marginB>=0?'+':'')+man(r.marginB)}（${diff>=0?'+':'−'}${man(Math.abs(diff))}）　›`;
+    b.onclick=()=>{ document.querySelector('nav button[data-tab="money"]').click(); $('cmpResult').scrollIntoView({block:'center'}); };
+    box.append(b);
+  }
 }
 
 // ---------- ホーム ----------
 function renderCountdown(){
   const t=todayYmd(), r=data.retireDate;
-  if(!parseYmd(r)){ $('cdDays').textContent='–'; $('cdDetail').textContent='「設定」で退職の日を入れてください。'; $('cdTitle').textContent='退職の日まで'; return; }
+  if(!parseYmd(r)){ $('cdTitle').textContent='退職の日'; $('cdDays').textContent='未定'; $('cdDetail').textContent='決まったら「設定」で入れると、日数を数えます。'; return; }
   const d=daysBetween(t,r);
   if(d>0){
     $('cdTitle').textContent='退職の日まで';
@@ -302,12 +593,12 @@ function renderProgress(){
   // 時間の進みぐあいも並べる（準備が遅れていないかの目安）
   if(parseYmd(data.retireDate) && parseYmd(data.startDate)){
     const span=daysBetween(data.startDate,data.retireDate), gone=daysBetween(data.startDate,todayYmd());
-    if(span>0 && gone>=0){ const tp=Math.min(100,Math.round(gone/span*100)); txt+=` ／ 時間は ${tp}% 進みました`; }
+    if(span>0 && gone>0){ const tp=Math.min(100,Math.round(gone/span*100)); if(tp>0) txt+=` ／ 時間は ${tp}% 進みました`; }
   }
   $('prgText').textContent=txt;
   const box=$('nextTodo'); box.textContent='';
   const next = sortedTodos().filter(x=>!x.done)[0];
-  if(next){ const n=document.createElement('div'); n.className='note'; n.textContent='つぎ： '+next.text+(next.due?`（${jpDate(next.due)}まで）`:''); box.append(n); }
+  if(next){ const n=document.createElement('div'); n.className='note'; n.textContent='つぎ： '+next.text+(dueOf(next)?`（${jpDate(dueOf(next))}まで）`:''); box.append(n); }
 }
 function renderHomeDay(){
   const ol=$('homeDay'); ol.textContent='';
@@ -319,8 +610,9 @@ function renderHomeDay(){
 function sortedTodos(){
   // 期限ありを先（近い順）、期限なしは入れた順
   return data.todos.slice().sort((a,b)=>{
-    if(a.due&&b.due) return a.due<b.due?-1:a.due>b.due?1:0;
-    if(a.due) return -1; if(b.due) return 1; return a.id-b.id;
+    const da=dueOf(a), db=dueOf(b);
+    if(da&&db) return da<db?-1:da>db?1:0;
+    if(da) return -1; if(db) return 1; return a.id-b.id;
   });
 }
 function todoRow(x){
@@ -329,8 +621,10 @@ function todoRow(x){
   cb.onchange=()=>{ x.done=cb.checked; x.doneAt=cb.checked?todayYmd():''; save(); renderAll(); };
   const t=document.createElement('div'); t.className='t'; t.textContent=x.text;
   if(x.done && x.doneAt){ const d=document.createElement('div'); d.className='due'; d.textContent=jpDate(x.doneAt)+' におわり'; t.append(d); }
-  else if(x.due){ const d=document.createElement('div'); const left=daysBetween(todayYmd(),x.due);
-    d.className='due'+(left<0?' late':''); d.textContent = left<0 ? `${jpDate(x.due)}まで（${-left}日すぎています）` : left===0 ? 'きょうまで' : `${jpDate(x.due)}まで（あと${left}日）`; t.append(d); }
+  else if(dueOf(x)){ const due=dueOf(x), d=document.createElement('div'); const left=daysBetween(todayYmd(),due);
+    const hint = !x.due && x.rel!=null ? `・${relText(x.rel)}` : '';
+    d.className='due'+(left<0?' late':''); d.textContent = (left<0 ? `${jpDate(due)}まで（${-left}日すぎています）` : left===0 ? 'きょうまで' : `${jpDate(due)}まで（あと${left}日）`)+hint; t.append(d); }
+  else if(x.rel!=null){ const d=document.createElement('div'); d.className='due'; d.textContent=`期限の目安：${relText(x.rel)}（退職の日を入れると日付が出ます）`; t.append(d); }
   const del=document.createElement('button'); del.className='x'; del.textContent='✕'; del.title='けす';
   del.onclick=()=>{ if(confirm('「'+x.text+'」をけしますか？')){ data.todos=data.todos.filter(y=>y!==x); save(); renderAll(); } };
   row.append(cb,t,del); return row;
@@ -353,9 +647,21 @@ $('todoText').addEventListener('keydown',e=>{ if(e.key==='Enter') $('todoAdd').c
 
 // ---------- お金の入力 ----------
 document.querySelectorAll('[data-m]').forEach(inp=>{
-  inp.addEventListener('input',()=>{ const v=inp.value.trim(); data.money[inp.dataset.m] = v===''?'':Number(v); save(); renderMoney(); renderHomeMoney(); });
+  inp.addEventListener('input',()=>{ const k=inp.dataset.m, v=inp.value.trim();
+    data.money[k] = k==='birth' ? (/^\d{4}-\d{2}$/.test(v)?v:'') : k==='job' ? (JOBS.includes(v)?v:'') : (v===''?'':Number(v));
+    save(); renderMoney(); renderHomeMoney(); renderCompare(); });
 });
-function fillMoney(){ document.querySelectorAll('[data-m]').forEach(inp=>{ const v=data.money[inp.dataset.m]; inp.value = (v===''||v==null)?'':v; }); }
+document.querySelectorAll('[data-c]').forEach(inp=>{
+  inp.addEventListener('input',()=>{ const k=inp.dataset.c, v=inp.value.trim();
+    data.cmp[k] = k==='date' ? (parseYmd(v)?v:'') : (v===''?'':Number(v)); save(); renderMoney(); renderCompare(); renderHomeMoney(); });
+});
+function fillMoney(){
+  document.querySelectorAll('[data-m]').forEach(inp=>{ const v=data.money[inp.dataset.m]; inp.value = (v===''||v==null)?'':v; });
+  document.querySelectorAll('[data-c]').forEach(inp=>{ const v=data.cmp[inp.dataset.c]; inp.value = (v===''||v==null)?'':v; });
+  // 「くわしく」に何か入っている人は、たたまずに開いておく（年金年齢などの既定値は数えない）
+  const m=data.money;
+  if(['otherIn','work','reserve','tax','oneTime','age'].some(k=>m[k]!==''&&m[k]!=null) || num(m.pensionAge)!==65 || num(m.lifeAge)!==90 || num(m.infl)>0) $('moreBox').open=true;
+}
 
 // ---------- 理想の1日 ----------
 $('daySave').onclick=()=>{
@@ -369,6 +675,11 @@ $('dateSave').onclick=()=>{
   if(r && !parseYmd(r)) return alert('退職の日の形が正しくありません。');
   data.retireDate=r||''; if(parseYmd(s)) data.startDate=s;
   save(); renderAll(); $('dateSaved').textContent='保存しました ✓'; setTimeout(()=>$('dateSaved').textContent='',2000);
+};
+$('dateClear').onclick=()=>{
+  if(!confirm('退職の日を「未定」にしますか？（ほかの記録は消えません）')) return;
+  data.retireDate=''; $('retireDate').value=''; save(); renderAll();
+  $('dateSaved').textContent='未定にしました'; setTimeout(()=>$('dateSaved').textContent='',2000);
 };
 
 // ---------- 控え ----------
@@ -391,20 +702,150 @@ function applyBackup(text){
   if(!d || typeof d!=='object' || !Array.isArray(d.todos) || !Array.isArray(d.day)) return 'このアプリの控えではないようです。';
   if(!confirm('いまの記録を、控えの中身で置きかえます。よろしいですか？')) return '';
   const b=blank();
-  data={ v:1,
+  data={ v:1, welcomed:true,
     retireDate: parseYmd(d.retireDate)?d.retireDate:'',
     startDate: parseYmd(d.startDate)?d.startDate:b.startDate,
     money: Object.assign({}, b.money),
     todos: d.todos.filter(x=>x&&typeof x.text==='string'&&x.text.trim()).map((x,i)=>({
       id: Number(x.id)||Date.now()+i, text:String(x.text).slice(0,100),
-      due: parseYmd(x.due)?x.due:'', done:!!x.done, doneAt: parseYmd(x.doneAt)?x.doneAt:'' })),
+      due: parseYmd(x.due)?x.due:'', rel: Number.isInteger(x.rel)?x.rel:undefined, done:!!x.done, doneAt: parseYmd(x.doneAt)?x.doneAt:'' })),
     day: d.day.filter(s=>typeof s==='string').map(s=>s.slice(0,100)).slice(0,30) };
-  for(const k of Object.keys(b.money)){ const v=d.money&&d.money[k]; data.money[k] = (v===''||v==null||!isFinite(Number(v)))?b.money[k]:Number(v); }
+  for(const k of Object.keys(b.money)){ const v=d.money&&d.money[k];
+    if(k==='birth'){ data.money.birth = /^\d{4}-\d{2}$/.test(v||'')?v:''; continue; }
+    if(k==='job'){ data.money.job = JOBS.includes(v)?v:''; continue; }
+    data.money[k] = (v===''||v==null||!isFinite(Number(v)))?b.money[k]:Number(v); }
+  const c=d.cmp||{};
+  data.cmp={ date: parseYmd(c.date)?c.date:'',
+    income: (c.income===''||c.income==null||!isFinite(Number(c.income)))?'':Number(c.income),
+    severance: (c.severance===''||c.severance==null||!isFinite(Number(c.severance)))?'':Number(c.severance) };
   save(); fillAll(); renderAll(); return '控えから戻しました ✓';
 }
 $('bkFromText').onclick=()=>{ const t=$('bkText').value.trim(); if(!t) return; const m=applyBackup(t); if(m) $('bkMsg').textContent=m; };
 $('bkFromFile').onclick=()=>$('bkFileIn').click();
 $('bkFileIn').onchange=async()=>{ const f=$('bkFileIn').files[0]; if(!f) return; const m=applyBackup(await f.text()); if(m) $('bkMsg').textContent=m; $('bkFileIn').value=''; };
+
+// ---------- AI相談（Gemini・キーは利用者が自分で入れる） ----------
+const KEY_STORE = 'taishoku-note-gemini';
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+const AI_PROMPT = `あなたは「つぎの暮らしノート」の退職相談役です。日本で退職を考えている人（会社員・公務員どちらも）の相談にのります。
+【話し方】
+- 結論を先に。専門用語は必ずかみくだく（例：「任意継続＝辞めた会社の健康保険を最長2年つづける仕組み」）。
+- スマホで読むので短く。本文は400字以内（確認先・やることの行は含めない）。長くなりそうなら大事な3点にしぼり「くわしく知りたければ聞いてください」と添える。
+- 記号の飾り（#、*、**）は使わない。箇条書きは「・」で始める。
+【守ること】
+- 「辞めるべき」「続けるべき」と決めない。判断の材料と、本人が考えるための問いを返す。
+- 特定の金融商品・銘柄・投資の配分は勧めない（投資の助言はできない、と伝える）。
+- 制度の細かいところ（金額・期限・条件）は、勤め先や人によって違う。確かでないことは「確かではありません」と言う。
+- 会社員と公務員で違う制度（失業給付・退職金・年金の上乗せなど）がある。「はたらき方」が分かっていればその人に合う話だけをする。分からなければ両方を短く分けて話す。
+- 利用者の数字が渡されたら、それを使って具体的に話す。計算したら式もかんたんに示す。
+- 勤め先の人の名前など、個人を特定する情報はたずねない。
+- 心身がつらそうなときは、お金の話より先に、休むことや身近な人・専門の窓口に話すことをすすめる。
+【最後に必ず書くこと】
+確認先：（勤め先の人事、共済組合、年金事務所、市区町村の窓口、ハローワーク、税務署 などから1〜2つ）
+やること：（次にできる行動。1行40字以内で1〜3行。1行ずつ「やること：」で始め、その後ろに行動を書く。「やること：」だけの行は作らない）`;
+// AIが記号の飾りを使ってきたときに、読みやすい形に直す
+function cleanAi(t){
+  return t.replace(/\*\*(.+?)\*\*/g,'$1')
+          .replace(/^\s{0,3}#{1,6}\s*/gm,'')
+          .replace(/^(\s*)[*\-]\s+/gm,'$1・')
+          .replace(/^[ \t]*やること[:：][ \t]*$/gm,'')   // 中身のない「やること：」の行
+          .replace(/^([ \t]*)(やること[:：][ \t]*){2,}/gm,'$1やること：')  // 「やること：」の重なり
+          .replace(/\n{3,}/g,'\n\n').trim();
+}
+const AI_EXAMPLES = ['1年遅らせると何が変わる？','辞めたあとの健康保険はどれがいい？','退職の翌年にかかるお金は？'];
+let chatHistory = [];
+
+function getKey(){ try{ return (localStorage.getItem(KEY_STORE)||'').trim(); }catch(e){ return ''; } }
+function dataSummary(){
+  const m=data.money, L=[];
+  L.push('退職の日：'+(parseYmd(data.retireDate)?jpDate(data.retireDate)+`（あと${daysBetween(todayYmd(),data.retireDate)}日）`:'未定'));
+  const f=(label,k,u)=>{ if(m[k]!==''&&m[k]!=null) L.push(`${label}：${m[k]}${u}`); };
+  if(m.job) L.push('はたらき方：'+m.job);
+  // 生まれた年月そのものは送らず、計算した年齢だけを送る
+  if(ageOf(m)>0) L.push((parseYmd(data.retireDate)?'退職するときの年齢：':'いまの年齢：')+Math.floor(ageOf(m))+'歳');
+  f('いまの資産','assets','万円'); f('ひと月の生活費','living','万円');
+  f('年金（家族の合計・ひと月・65歳からの額）','pension','万円');
+  if(num(m.pension)>0) L.push(`年金を受け取りはじめる年齢：${clampPA(m.pensionAge)}歳（ひと月 ${pensionMonthly(m).toFixed(1)}万円）`);
+  L.push('物価の上がり方：'+(num(m.infl)>0?`年${num(m.infl)}%で計算`:'考えない'));
+  f('退職金・退職手当','severance','万円'); f('ほかに入ってくるお金','otherIn','万円'); f('退職後に働いて得るお金（ひと月）','work','万円');
+  f('もしもの予備','reserve','万円'); f('退職翌年の住民税','tax','万円'); f('一度だけ出るお金','oneTime','万円'); f('何歳までを考えるか','lifeAge','歳');
+  if(moneyReady(m)){ const c=calc(m); L.push(`このアプリの計算：必要なお金 ${man(c.need)}、余白 ${man(c.margin)}`); }
+  const r=compare(); if(!r.msg) L.push(`くらべる日 ${jpDate(data.cmp.date)} に辞めた場合の余白：${man(r.marginB)}（差 ${man(r.marginB-r.marginA)}）`);
+  return L.join('\n');
+}
+function updateAiUI(){
+  $('aiNoKey').hidden = !!getKey();
+  $('aiPreview').textContent = dataSummary();
+  $('aiPreviewBox').style.display = $('aiWithData').checked ? '' : 'none';
+}
+function addMsg(cls, text){
+  const d=document.createElement('div'); d.className='msg '+cls; d.textContent=text; $('chat').append(d); d.scrollIntoView({block:'end',behavior:'smooth'}); return d;
+}
+// 答えの「やること：〜」の行を、ボタンでやることリストに入れられるようにする
+function addTodoButtons(box, text){
+  // 行の中だけを見る（\s だと改行をまたいで次の行を拾ってしまう）。「やること：」が重なっていても外す
+  const lines=[...text.matchAll(/^[ \t]*[・]?[ \t]*やること[:：][ \t]*(.+)$/gm)]
+    .map(x=>x[1].replace(/^(やること[:：][ \t]*)+/,'').trim().slice(0,100)).filter(Boolean).slice(0,3);
+  for(const t of lines){
+    const b=document.createElement('button'); b.className='ghost small todoAdd'; b.textContent='＋ やることに入れる：'+t;
+    b.onclick=()=>{ data.todos.push({id:Date.now(), text:t, due:'', done:false, doneAt:''}); save(); renderAll(); b.disabled=true; b.textContent='✓ 入れました：'+t; };
+    box.append(b);
+  }
+}
+async function callGemini(contents){
+  const key=getKey(); if(!key){ const e=new Error('NO_KEY'); throw e; }
+  const body={ system_instruction:{parts:[{text:AI_PROMPT}]}, contents,
+    generationConfig:{ temperature:0.4, maxOutputTokens:4096 } };
+  let last=null;
+  for(const model of MODELS){
+    try{
+      // キーはURLに入れず見出しで送る（URLは記録に残りやすいため）
+      const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',
+        {method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key}, body:JSON.stringify(body)});
+      if(!res.ok){ last=new Error('API '+res.status); last.status=res.status; if(res.status===400||res.status===401||res.status===403) throw last; continue; }
+      const j=await res.json(), cand=(j.candidates||[])[0];
+      const text=((cand&&cand.content&&cand.content.parts)||[]).map(p=>p.text||'').join('').trim();
+      if(text) return text;
+      last=new Error(cand&&cand.finishReason==='MAX_TOKENS'?'答えが長すぎて途中で切れました。もう一度お試しください。':'答えが空でした。もう一度お試しください。');
+    }catch(e){ if(e.status===400||e.status===401||e.status===403) throw e; last=e; }
+  }
+  throw last||new Error('つながりませんでした');
+}
+function friendlyError(e){
+  if(e.message==='NO_KEY') return 'まだキーが入っていません。「設定」の「AI相談のキー」に入れてください。';
+  if(e.status===400||e.status===401||e.status===403) return 'キーが正しくないようです。「設定」で入れ直してください。';
+  if(e.status===429) return '使える回数の上限のようです。少し待ってからもう一度お試しください。';
+  if(e instanceof TypeError) return 'インターネットにつながっていないようです。電波のよいところでもう一度お試しください。';
+  return e.message||'うまくいきませんでした。';
+}
+async function sendAi(q){
+  q=(q||'').trim(); if(!q) return;
+  if(!getKey()){ addMsg('bot', friendlyError(new Error('NO_KEY'))); return; }
+  $('aiText').value=''; $('aiSend').disabled=true;
+  addMsg('me', q);
+  const wait=addMsg('bot wait','考えています…');
+  const withData=$('aiWithData').checked;
+  const userText = withData ? `【わたしの数字（このアプリに入れたもの）】\n${dataSummary()}\n\n【相談】\n${q}` : q;
+  try{
+    const ans=cleanAi(await callGemini(chatHistory.concat([{role:'user',parts:[{text:userText}]}])));
+    wait.remove(); const box=addMsg('bot', ans); addTodoButtons(box, ans);
+    chatHistory.push({role:'user',parts:[{text:userText}]},{role:'model',parts:[{text:ans}]});
+    if(chatHistory.length>12) chatHistory=chatHistory.slice(-12);  // 直近6往復だけ覚える
+  }catch(e){ wait.remove(); addMsg('bot', friendlyError(e)); $('aiText').value=q; }
+  $('aiSend').disabled=false;
+}
+$('aiSend').onclick=()=>sendAi($('aiText').value);
+$('aiReset').onclick=()=>{ chatHistory=[]; $('chat').textContent=''; };
+$('aiWithData').onchange=updateAiUI;
+AI_EXAMPLES.forEach(t=>{ const b=document.createElement('button'); b.className='ghost small'; b.textContent=t; b.onclick=()=>sendAi(t); $('aiExamples').append(b); });
+$('keySave').onclick=()=>{ const v=$('keyIn').value.trim(); if(!v) return;
+  try{ localStorage.setItem(KEY_STORE,v); }catch(e){}
+  $('keyIn').value=''; $('keyMsg').textContent='保存しました ✓'; updateAiUI(); };
+$('keyDel').onclick=()=>{ if(!confirm('保存したキーを消しますか？')) return; try{ localStorage.removeItem(KEY_STORE); }catch(e){} $('keyMsg').textContent='消しました'; updateAiUI(); };
+function showKeyState(){ $('keyIn').placeholder = getKey() ? '保存済み（入れ直すときだけ入力）' : 'AIza… で始まる文字'; }
+
+// ---------- はじめての人へ ----------
+$('welcomeOk').onclick=()=>{ data.welcomed=true; save(); $('welcome').hidden=true; };
 
 // ---------- タブ ----------
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
@@ -414,9 +855,11 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 });
 
 function fillAll(){ fillMoney(); $('dayText').value=data.day.join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
-function renderAll(){ renderCountdown(); renderProgress(); renderHomeMoney(); renderHomeDay(); renderMoney(); renderTodos(); }
+function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHomeDay(); renderMoney(); renderCompare(); renderTodos(); }
 
 load(); fillAll(); renderAll();
+// アドレスの最後に ?tab=money などを付けると、そのタブで開く
+{ const t=new URLSearchParams(location.search).get('tab'); const b=t&&document.querySelector('nav button[data-tab="'+CSS.escape(t)+'"]'); if(b) b.click(); }
 $('ver').textContent='つぎの暮らしノート '+VERSION+' ・ 記録はこの端末の中だけ';
 // 日をまたいで開き直したとき、日数を作り直す
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderAll(); });
