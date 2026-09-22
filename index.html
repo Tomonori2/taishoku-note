@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>つぎの暮らしノート</title>
+<meta name="theme-color" content="#2f6f62">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3efe6; --card:#fffdf8; --ink:#2b2a27; --sub:#6d6a62; --line:#e2dccf;
+  --main:#2f6f62; --main-soft:#dcebe6; --warn:#b3471f; --warn-soft:#f8e3da; --ok:#2e7d4f;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  font-size:17px;line-height:1.6;padding-bottom:84px}
+header{padding:18px 16px 6px}
+header h1{font-size:15px;color:var(--sub);margin:0;font-weight:600;letter-spacing:.05em}
+main{padding:0 16px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.card h2{font-size:15px;margin:0 0 8px;color:var(--sub)}
+.big{font-size:64px;font-weight:800;line-height:1.1;color:var(--main);letter-spacing:-.02em}
+.big small{font-size:22px;font-weight:700;margin-left:4px}
+.sub{color:var(--sub);font-size:14px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.bar>i{display:block;height:100%;background:var(--main);border-radius:6px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:0}
+.row b{white-space:nowrap}
+.plus{color:var(--ok)} .minus{color:var(--warn)}
+.note{background:var(--main-soft);border-radius:12px;padding:10px 12px;font-size:15px;margin-top:10px}
+.note.warn{background:var(--warn-soft)}
+label.f{display:block;margin:10px 0 2px;font-size:14px;color:var(--sub)}
+input[type=number],input[type=text],input[type=date],textarea{width:100%;font:inherit;padding:10px 12px;
+  border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.unit{display:flex;align-items:center;gap:8px}.unit span{white-space:nowrap;color:var(--sub)}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--main);color:#fff;font-weight:700;cursor:pointer}
+button.ghost{background:transparent;color:var(--main);border:1px solid var(--main)}
+button.small{padding:6px 10px;font-size:14px}
+button.danger{background:var(--warn)}
+.todo{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.todo:last-child{border-bottom:0}
+.todo input[type=checkbox]{width:26px;height:26px;margin-top:2px;accent-color:var(--main);flex:none}
+.todo .t{flex:1;min-width:0;word-break:break-word}
+.todo.done .t{color:var(--sub);text-decoration:line-through}
+.todo .due{font-size:13px;color:var(--sub)}
+.todo .due.late{color:var(--warn);font-weight:700}
+.todo .x{background:none;color:var(--sub);padding:2px 6px;font-size:18px}
+.add{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.add input[type=text]{flex:1 1 180px}.add input[type=date]{flex:0 1 160px}
+.day li{padding:4px 0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;color:var(--sub);padding:6px 2px;font-size:12px;font-weight:600;border-radius:10px}
+nav button .i{display:block;font-size:22px;line-height:1.2}
+nav button.on{color:var(--main);background:var(--main-soft)}
+section{display:none}section.on{display:block}
+.ver{text-align:center;color:var(--sub);font-size:12px;margin:18px 0}
+.empty{color:var(--sub);font-size:15px}
+</style>
+</head>
+<body>
+<header><h1>🌅 つぎの暮らしノート</h1></header>
+<main>
+
+<!-- ホーム -->
+<section id="home" class="on">
+  <div class="card" id="cdCard">
+    <h2 id="cdTitle">退職の日まで</h2>
+    <div class="big" id="cdDays">–</div>
+    <div class="sub" id="cdDetail"></div>
+  </div>
+  <div class="card">
+    <h2>準備の進みぐあい</h2>
+    <div class="bar"><i id="prgBar" style="width:0"></i></div>
+    <div class="sub" id="prgText"></div>
+    <div id="nextTodo"></div>
+  </div>
+  <div class="card" id="homeMoney"></div>
+  <div class="card">
+    <h2>理想の1日</h2>
+    <ol class="day" id="homeDay"></ol>
+  </div>
+</section>
+
+<!-- お金 -->
+<section id="money">
+  <div class="card" id="moneyResult"></div>
+  <div class="card">
+    <h2>数字を入れる（単位：万円）</h2>
+    <div class="sub">入れた数字はこのスマホの中だけに保存されます。どこにも送りません。</div>
+    <label class="f">いまの資産</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
+    <label class="f">ひと月の生活費</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
+    <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension"><span>万円/月</span></div>
+    <label class="f">退職手当の見込み</label><div class="unit"><input type="number" inputmode="decimal" data-m="severance"><span>万円</span></div>
+    <label class="f">もしもの予備</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
+    <label class="f">退職翌年の住民税</label><div class="unit"><input type="number" inputmode="decimal" data-m="tax"><span>万円</span></div>
+    <label class="f">そのほか一度だけ出るお金（車・家の修理など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="oneTime"><span>万円</span></div>
+    <label class="f">退職するときの年齢</label><div class="unit"><input type="number" inputmode="numeric" data-m="age"><span>歳</span></div>
+    <label class="f">年金がもらえ始める年齢</label><div class="unit"><input type="number" inputmode="numeric" data-m="pensionAge"><span>歳</span></div>
+    <label class="f">何歳までを考えるか</label><div class="unit"><input type="number" inputmode="numeric" data-m="lifeAge"><span>歳</span></div>
+  </div>
+  <div class="card sub">
+    ※ 運用で増える分・物価が上がる分は入れていない、かための計算です。<br>
+    ※ 自分の数字を足し算・引き算しているだけで、投資のすすめではありません。
+  </div>
+</section>
+
+<!-- やること -->
+<section id="todo">
+  <div class="card">
+    <h2>退職までにやること</h2>
+    <div id="todoList"></div>
+    <div class="add">
+      <input type="text" id="todoText" placeholder="やることを書く" maxlength="100">
+      <input type="date" id="todoDue" title="いつまでに（なくてもよい）">
+      <button id="todoAdd">たす</button>
+    </div>
+  </div>
+  <div class="card" id="doneCard" hidden>
+    <h2>おわったこと</h2>
+    <div id="doneList"></div>
+  </div>
+</section>
+
+<!-- 理想の1日 -->
+<section id="day">
+  <div class="card">
+    <h2>退職したら、こんな1日にしたい</h2>
+    <div class="sub">1行に1つずつ書きます。ホーム画面にも出ます。</div>
+    <textarea id="dayText" rows="10" style="margin-top:8px"></textarea>
+    <div style="margin-top:10px"><button id="daySave">保存する</button> <span class="sub" id="daySaved"></span></div>
+  </div>
+</section>
+
+<!-- 設定 -->
+<section id="set">
+  <div class="card">
+    <h2>退職の日</h2>
+    <input type="date" id="retireDate">
+    <label class="f">数えはじめの日（進みぐあいのバーの起点）</label>
+    <input type="date" id="startDate">
+    <div style="margin-top:10px"><button id="dateSave">保存する</button> <span class="sub" id="dateSaved"></span></div>
+  </div>
+  <div class="card">
+    <h2>データの控え（バックアップ）</h2>
+    <div class="sub">このアプリの記録はスマホの中だけにあります。ブラウザの掃除や機種変更で消えるので、ときどき控えを取ってください。</div>
+    <div class="note warn">🔒 控えにはお金の数字が入っています。人に送ったり、公開の場所に置いたりしないでください。</div>
+    <div class="add">
+      <button id="bkFile">ファイルに保存</button>
+      <button class="ghost" id="bkCopy">文字をコピー</button>
+    </div>
+    <label class="f">控えから戻す（貼りつけるか、ファイルを選ぶ）</label>
+    <textarea id="bkText" rows="3" placeholder="コピーした控えの文字をここに貼る"></textarea>
+    <div class="add">
+      <button class="ghost" id="bkFromText">貼った文字から戻す</button>
+      <input type="file" id="bkFileIn" accept=".json,application/json,text/plain" hidden>
+      <button class="ghost" id="bkFromFile">ファイルから戻す</button>
+    </div>
+    <div class="sub" id="bkMsg"></div>
+  </div>
+</section>
+
+<div class="ver" id="ver"></div>
+</main>
+
+<nav>
+  <button data-tab="home" class="on"><span class="i">🏠</span>ホーム</button>
+  <button data-tab="money"><span class="i">💴</span>お金</button>
+  <button data-tab="todo"><span class="i">✅</span>やること</button>
+  <button data-tab="day"><span class="i">☀️</span>理想の1日</button>
+  <button data-tab="set"><span class="i">⚙️</span>設定</button>
+</nav>
+
+<script>
+const VERSION = 'v1.0';
+const KEY = 'taishoku-note';
+const $ = id => document.getElementById(id);
+
+// ---------- 日付（端末の時刻で、日付だけを扱う） ----------
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseYmd(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(s||'')) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function todayYmd(){ return ymd(new Date()); }
+// 暦の日数差（夏時間などの影響を受けないよう UTC で数える）
+function daysBetween(a,b){ const A=parseYmd(a),B=parseYmd(b); return Math.round((Date.UTC(B.getFullYear(),B.getMonth(),B.getDate())-Date.UTC(A.getFullYear(),A.getMonth(),A.getDate()))/864e5); }
+// 「あと○か月と○日」
+function monthsDays(from,to){
+  const A=parseYmd(from),B=parseYmd(to); if(!A||!B||B<A) return null;
+  // ○か月後（1/31の1か月後は2/28のように月末に寄せる）
+  const addM=k=>{ const last=new Date(A.getFullYear(),A.getMonth()+k+1,0).getDate(); return new Date(A.getFullYear(),A.getMonth()+k,Math.min(A.getDate(),last)); };
+  let m=0; while(addM(m+1)<=B) m++;
+  return {m, d:daysBetween(ymd(addM(m)),to)};
+}
+function jpDate(s){ const d=parseYmd(s); if(!d) return ''; return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
+
+// ---------- 保存 ----------
+const DEFAULT_TODOS = [
+  'ねんきんネットで年金の見込み額を確かめる',
+  '退職手当の見込み額を確かめる',
+  '退職翌年の住民税のぶんの現金を分けておく',
+  '退職後の健康保険をどれにするか決める（任意継続・国保・家族の扶養）',
+  '家族の扶養に入れるか、条件を確かめる',
+  '国民年金の手続きを調べる（第1号か第3号か）',
+];
+// 例文（公開されるので本人の暮らしは書かない。自分の1日は画面で書きかえる）
+const DEFAULT_DAY = ['起きる','体を動かす','好きなことに打ちこむ','家族や友だちとの時間'];
+
+function blank(){
+  return { v:1, retireDate:'', startDate:todayYmd(),
+    money:{assets:'',living:'',pension:'',severance:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90},
+    todos: DEFAULT_TODOS.map((t,i)=>({id:Date.now()+i, text:t, due:'', done:false, doneAt:''})),
+    day: DEFAULT_DAY.slice() };
+}
+let data;
+function load(){
+  try{ const s=localStorage.getItem(KEY); data = s ? JSON.parse(s) : blank(); }catch(e){ data = blank(); }
+  const b=blank();
+  for(const k of Object.keys(b)) if(data[k]===undefined) data[k]=b[k];
+  data.money = Object.assign({}, b.money, data.money||{});
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){ alert('保存できませんでした。ブラウザの設定を確認してください。'); } }
+
+// ---------- お金の計算 ----------
+function num(v){ const n=parseFloat(v); return isFinite(n)?n:0; }
+function calc(m, livingOverride){
+  const living = livingOverride!==undefined ? livingOverride : num(m.living);
+  const age=num(m.age), pAge=num(m.pensionAge), lAge=num(m.lifeAge);
+  const bridgeYears = Math.max(0, pAge-age);
+  const afterYears  = Math.max(0, lAge-Math.max(pAge,age));
+  const bridge = living*12*bridgeYears;
+  const gapMonthly = Math.max(0, living-num(m.pension));
+  const after = gapMonthly*12*afterYears;
+  const need = bridge + after + num(m.reserve) + num(m.tax) + num(m.oneTime) - num(m.severance);
+  return {bridgeYears, afterYears, bridge, gapMonthly, after, need, margin:num(m.assets)-need};
+}
+function man(n){ const r=Math.round(n); return (r<0?'−':'')+Math.abs(r).toLocaleString('ja-JP')+'万円'; }
+function moneyReady(m){ return num(m.living)>0 && num(m.age)>0 && m.assets!=='' ; }
+
+function renderMoney(){
+  const m=data.money, box=$('moneyResult'); box.textContent='';
+  const h=document.createElement('h2'); h.textContent='足りるかどうか'; box.append(h);
+  if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下に「いまの資産」「ひと月の生活費」「退職するときの年齢」を入れると計算します。'; box.append(p); return; }
+  const c=calc(m), up=calc(m, num(m.living)+1);
+  const rows=[
+    [`年金までの生活費（${c.bridgeYears}年）`, man(c.bridge)],
+    [c.gapMonthly>0?`年金で足りない分（月${man(c.gapMonthly)}×${c.afterYears}年）`:'年金が始まったあと', c.gapMonthly>0?man(c.after):'年金でまかなえる'],
+    ['もしもの予備', man(num(m.reserve))],
+    ['住民税・一度だけのお金', man(num(m.tax)+num(m.oneTime))],
+    ['退職手当（入ってくる）', '−'+man(num(m.severance)).replace('−','')],
+  ];
+  for(const [a,b] of rows){ const r=document.createElement('div'); r.className='row'; const s=document.createElement('span'); s.textContent=a; const v=document.createElement('b'); v.textContent=b; r.append(s,v); box.append(r); }
+  const tot=document.createElement('div'); tot.className='row'; tot.innerHTML='<span>必要なお金</span>'; const tb=document.createElement('b'); tb.textContent=man(c.need); tot.append(tb); box.append(tot);
+  const big=document.createElement('div'); big.style.marginTop='10px';
+  big.innerHTML='<div class="sub">いまの資産との差（余白）</div>';
+  const bv=document.createElement('div'); bv.className='big '+(c.margin>=0?'plus':'minus'); bv.style.fontSize='40px'; bv.textContent=(c.margin>=0?'+':'')+man(c.margin);
+  big.append(bv); box.append(big);
+  const n=document.createElement('div'); n.className='note'+(c.margin<0?' warn':'');
+  n.textContent = c.margin>=0
+    ? `いまの計画なら、あと ${man(c.margin)} の余白があります。`
+    : `いまの計画だと ${man(-c.margin)} 足りません。生活費か時期を見直す目安にしてください。`;
+  box.append(n);
+  const s=document.createElement('div'); s.className='note';
+  s.textContent = `💡 生活費をひと月1万円上げると、必要なお金は ${man(up.need-c.need)} ふえます。`;
+  box.append(s);
+}
+
+function renderHomeMoney(){
+  const box=$('homeMoney'); box.textContent='';
+  const h=document.createElement('h2'); h.textContent='お金の余白'; box.append(h);
+  if(!moneyReady(data.money)){ const p=document.createElement('div'); p.className='empty'; p.textContent='「お金」タブで数字を入れると、ここに余白が出ます。'; box.append(p); return; }
+  const c=calc(data.money);
+  const v=document.createElement('div'); v.className='big '+(c.margin>=0?'plus':'minus'); v.style.fontSize='36px'; v.textContent=(c.margin>=0?'+':'')+man(c.margin);
+  const s=document.createElement('div'); s.className='sub'; s.textContent=`必要なお金 ${man(c.need)} ／ 生活費は月${man(num(data.money.living))}`;
+  box.append(v,s);
+}
+
+// ---------- ホーム ----------
+function renderCountdown(){
+  const t=todayYmd(), r=data.retireDate;
+  if(!parseYmd(r)){ $('cdDays').textContent='–'; $('cdDetail').textContent='「設定」で退職の日を入れてください。'; $('cdTitle').textContent='退職の日まで'; return; }
+  const d=daysBetween(t,r);
+  if(d>0){
+    $('cdTitle').textContent='退職の日まで';
+    $('cdDays').innerHTML=''; $('cdDays').append(String(d)); const sm=document.createElement('small'); sm.textContent='日'; $('cdDays').append(sm);
+    const md=monthsDays(t,r), wk=Math.floor(d/7);
+    $('cdDetail').textContent=`${jpDate(r)}まで。あと${md.m}か月と${md.d}日（約${wk}週）`;
+  }else if(d===0){
+    $('cdTitle').textContent='きょうが退職の日'; $('cdDays').textContent='🎉'; $('cdDetail').textContent='おつかれさまでした。';
+  }else{
+    $('cdTitle').textContent='つぎの暮らし'; $('cdDays').innerHTML=''; $('cdDays').append(String(-d)); const sm=document.createElement('small'); sm.textContent='日目'; $('cdDays').append(sm);
+    $('cdDetail').textContent=`${jpDate(r)}に退職してから。`;
+  }
+}
+function renderProgress(){
+  const all=data.todos.length, done=data.todos.filter(x=>x.done).length;
+  const pct = all ? Math.round(done/all*100) : 0;
+  $('prgBar').style.width=pct+'%';
+  let txt = all ? `やること ${done} / ${all} 件おわり（${pct}%）` : 'やることはまだありません。';
+  // 時間の進みぐあいも並べる（準備が遅れていないかの目安）
+  if(parseYmd(data.retireDate) && parseYmd(data.startDate)){
+    const span=daysBetween(data.startDate,data.retireDate), gone=daysBetween(data.startDate,todayYmd());
+    if(span>0 && gone>=0){ const tp=Math.min(100,Math.round(gone/span*100)); txt+=` ／ 時間は ${tp}% 進みました`; }
+  }
+  $('prgText').textContent=txt;
+  const box=$('nextTodo'); box.textContent='';
+  const next = sortedTodos().filter(x=>!x.done)[0];
+  if(next){ const n=document.createElement('div'); n.className='note'; n.textContent='つぎ： '+next.text+(next.due?`（${jpDate(next.due)}まで）`:''); box.append(n); }
+}
+function renderHomeDay(){
+  const ol=$('homeDay'); ol.textContent='';
+  if(!data.day.length){ const li=document.createElement('li'); li.className='empty'; li.textContent='「理想の1日」タブで書けます。'; ol.append(li); return; }
+  for(const s of data.day){ const li=document.createElement('li'); li.textContent=s; ol.append(li); }
+}
+
+// ---------- やること ----------
+function sortedTodos(){
+  // 期限ありを先（近い順）、期限なしは入れた順
+  return data.todos.slice().sort((a,b)=>{
+    if(a.due&&b.due) return a.due<b.due?-1:a.due>b.due?1:0;
+    if(a.due) return -1; if(b.due) return 1; return a.id-b.id;
+  });
+}
+function todoRow(x){
+  const row=document.createElement('div'); row.className='todo'+(x.done?' done':'');
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=x.done;
+  cb.onchange=()=>{ x.done=cb.checked; x.doneAt=cb.checked?todayYmd():''; save(); renderAll(); };
+  const t=document.createElement('div'); t.className='t'; t.textContent=x.text;
+  if(x.done && x.doneAt){ const d=document.createElement('div'); d.className='due'; d.textContent=jpDate(x.doneAt)+' におわり'; t.append(d); }
+  else if(x.due){ const d=document.createElement('div'); const left=daysBetween(todayYmd(),x.due);
+    d.className='due'+(left<0?' late':''); d.textContent = left<0 ? `${jpDate(x.due)}まで（${-left}日すぎています）` : left===0 ? 'きょうまで' : `${jpDate(x.due)}まで（あと${left}日）`; t.append(d); }
+  const del=document.createElement('button'); del.className='x'; del.textContent='✕'; del.title='けす';
+  del.onclick=()=>{ if(confirm('「'+x.text+'」をけしますか？')){ data.todos=data.todos.filter(y=>y!==x); save(); renderAll(); } };
+  row.append(cb,t,del); return row;
+}
+function renderTodos(){
+  const list=$('todoList'), dl=$('doneList'); list.textContent=''; dl.textContent='';
+  const s=sortedTodos(), open=s.filter(x=>!x.done), done=s.filter(x=>x.done);
+  if(!open.length){ const p=document.createElement('div'); p.className='empty'; p.textContent= done.length?'のこりのやることはありません 🎉':'下の欄からやることを足せます。'; list.append(p); }
+  open.forEach(x=>list.append(todoRow(x)));
+  done.sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||'')).forEach(x=>dl.append(todoRow(x)));
+  $('doneCard').hidden=!done.length;
+}
+$('todoAdd').onclick=()=>{
+  const text=$('todoText').value.trim(); if(!text) return;
+  const due=parseYmd($('todoDue').value)?$('todoDue').value:'';
+  data.todos.push({id:Date.now(), text, due, done:false, doneAt:''});
+  $('todoText').value=''; $('todoDue').value=''; save(); renderAll();
+};
+$('todoText').addEventListener('keydown',e=>{ if(e.key==='Enter') $('todoAdd').click(); });
+
+// ---------- お金の入力 ----------
+document.querySelectorAll('[data-m]').forEach(inp=>{
+  inp.addEventListener('input',()=>{ const v=inp.value.trim(); data.money[inp.dataset.m] = v===''?'':Number(v); save(); renderMoney(); renderHomeMoney(); });
+});
+function fillMoney(){ document.querySelectorAll('[data-m]').forEach(inp=>{ const v=data.money[inp.dataset.m]; inp.value = (v===''||v==null)?'':v; }); }
+
+// ---------- 理想の1日 ----------
+$('daySave').onclick=()=>{
+  data.day=$('dayText').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,30);
+  save(); renderHomeDay(); $('daySaved').textContent='保存しました ✓'; setTimeout(()=>$('daySaved').textContent='',2000);
+};
+
+// ---------- 設定 ----------
+$('dateSave').onclick=()=>{
+  const r=$('retireDate').value, s=$('startDate').value;
+  if(r && !parseYmd(r)) return alert('退職の日の形が正しくありません。');
+  data.retireDate=r||''; if(parseYmd(s)) data.startDate=s;
+  save(); renderAll(); $('dateSaved').textContent='保存しました ✓'; setTimeout(()=>$('dateSaved').textContent='',2000);
+};
+
+// ---------- 控え ----------
+function backupText(){ return JSON.stringify({app:'taishoku-note', ver:VERSION, savedAt:new Date().toISOString(), data}); }
+$('bkFile').onclick=()=>{
+  const blob=new Blob([backupText()],{type:'application/json'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='つぎの暮らしノート_控え_'+todayYmd()+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000); $('bkMsg').textContent='ファイルに保存しました（ダウンロードの中にあります）。';
+};
+$('bkCopy').onclick=async()=>{
+  const t=backupText(); $('bkText').value=t;
+  try{ await navigator.clipboard.writeText(t); $('bkMsg').textContent='コピーしました。メモ帳などに貼って残してください。'; }
+  catch(e){ $('bkMsg').textContent='自動コピーできませんでした。上の枠の文字を長押ししてコピーしてください。'; }
+};
+// 関所：形のおかしい控えは読まずに、いまの記録を残す
+function applyBackup(text){
+  let o; try{ o=JSON.parse(text); }catch(e){ return '控えとして読めませんでした。'; }
+  if(o && o.app && o.app!=='taishoku-note') return '別のアプリの控えのようです。';
+  const d = (o && o.data) ? o.data : o;
+  if(!d || typeof d!=='object' || !Array.isArray(d.todos) || !Array.isArray(d.day)) return 'このアプリの控えではないようです。';
+  if(!confirm('いまの記録を、控えの中身で置きかえます。よろしいですか？')) return '';
+  const b=blank();
+  data={ v:1,
+    retireDate: parseYmd(d.retireDate)?d.retireDate:'',
+    startDate: parseYmd(d.startDate)?d.startDate:b.startDate,
+    money: Object.assign({}, b.money),
+    todos: d.todos.filter(x=>x&&typeof x.text==='string'&&x.text.trim()).map((x,i)=>({
+      id: Number(x.id)||Date.now()+i, text:String(x.text).slice(0,100),
+      due: parseYmd(x.due)?x.due:'', done:!!x.done, doneAt: parseYmd(x.doneAt)?x.doneAt:'' })),
+    day: d.day.filter(s=>typeof s==='string').map(s=>s.slice(0,100)).slice(0,30) };
+  for(const k of Object.keys(b.money)){ const v=d.money&&d.money[k]; data.money[k] = (v===''||v==null||!isFinite(Number(v)))?b.money[k]:Number(v); }
+  save(); fillAll(); renderAll(); return '控えから戻しました ✓';
+}
+$('bkFromText').onclick=()=>{ const t=$('bkText').value.trim(); if(!t) return; const m=applyBackup(t); if(m) $('bkMsg').textContent=m; };
+$('bkFromFile').onclick=()=>$('bkFileIn').click();
+$('bkFileIn').onchange=async()=>{ const f=$('bkFileIn').files[0]; if(!f) return; const m=applyBackup(await f.text()); if(m) $('bkMsg').textContent=m; $('bkFileIn').value=''; };
+
+// ---------- タブ ----------
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.tab));
+  window.scrollTo(0,0);
+});
+
+function fillAll(){ fillMoney(); $('dayText').value=data.day.join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
+function renderAll(){ renderCountdown(); renderProgress(); renderHomeMoney(); renderHomeDay(); renderMoney(); renderTodos(); }
+
+load(); fillAll(); renderAll();
+$('ver').textContent='つぎの暮らしノート '+VERSION+' ・ 記録はこの端末の中だけ';
+// 日をまたいで開き直したとき、日数を作り直す
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderAll(); });
+window.addEventListener('pageshow',e=>{ if(e.persisted) renderAll(); });
+if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
