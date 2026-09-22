@@ -114,6 +114,13 @@ section{display:none}section.on{display:block}
   <div class="card">
     <h2>まずはこれだけ（単位：万円）</h2>
     <div class="sub">入れた数字はこの端末の中だけに保存されます。どこにも送りません。だいたいの数字でかまいません。</div>
+    <details class="note" style="margin-top:10px"><summary style="font-weight:700;cursor:pointer">いまの給与（お給料・ボーナス）はどこに入れる？</summary>
+      <div style="margin-top:8px">この画面は「<b>退職の日から先</b>」のお金を見るところなので、毎月の給与を入れる欄はありません。退職の日まで働いて残るお金は「<b>いまの資産</b>」にふくめて考えます。</div>
+      <div style="margin-top:8px">給与を入れるのは、つぎの2つのときです。</div>
+      <div style="margin-top:8px">① <b>もう少し働いたらどうなるか</b>を見たいとき → 下の「もうひとつの日とくらべる」の「<b>働いている間の給与など（手取り・1年あたり）</b>」</div>
+      <div style="margin-top:8px">② <b>辞めたあとも働いて収入がある</b>とき → 「くわしく入れる」の「<b>退職後に働いて得るお金</b>」</div>
+      <div class="add"><button class="ghost small" id="goCmpIncome">①をひらく</button><button class="ghost small" id="goWorkIncome">②をひらく</button></div>
+    </details>
     <label class="f">はたらき方</label>
     <select data-m="job" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
       <option value="">えらぶ</option><option>会社員</option><option>公務員</option><option>自営業・フリーランス</option><option>パート・アルバイト</option><option>その他</option>
@@ -133,7 +140,7 @@ section{display:none}section.on{display:block}
   <details class="card" id="moreBox">
     <summary style="font-weight:700;cursor:pointer">くわしく入れる（入れるとより正確に）</summary>
     <label class="f">そのほか入ってくるお金（失業給付・企業年金の一時金など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="otherIn"><span>万円</span></div>
-    <label class="f">退職後に働いて得るお金（年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work"><span>万円/月</span></div>
+    <label class="f">退職後に働いて得るお金（給与・パート代など。年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work"><span>万円/月</span></div>
     <label class="f">もしもの予備</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
     <label class="f">退職翌年の住民税</label><div class="unit"><input type="number" inputmode="decimal" data-m="tax"><span>万円</span></div>
     <label class="f">そのほか一度だけ出るお金（車・家の修理など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="oneTime"><span>万円</span></div>
@@ -152,7 +159,8 @@ section{display:none}section.on{display:block}
     <div class="sub">退職の日がずれたら、余白がどう変わるかを並べます。</div>
     <label class="f">くらべる日（例：1年あと）</label>
     <input type="date" data-c="date">
-    <label class="f">働いている間の手取り（1年あたり）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
+    <label class="f">働いている間の給与など（手取り・1年あたり）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
+    <div class="sub">いまの給与を入れるのはここです。ボーナスもふくめた、手取りの1年ぶんを入れてください（月の手取り×12＋ボーナスの手取り でだいたい出ます）。</div>
     <label class="f">その日に辞めたときの退職金・手取り（空なら上と同じ）</label><div class="unit"><input type="number" inputmode="decimal" data-c="severance"><span>万円</span></div>
     <div id="cmpResult" style="margin-top:12px"></div>
   </div>
@@ -268,7 +276,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v2.6';
+const VERSION = 'v2.7';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -468,7 +476,7 @@ function compare(){
   if(!parseYmd(A)) return {msg:'「設定」で退職の日を入れると、くらべられます（未定のままだと起点がありません）。'};
   if(!parseYmd(B)) return {msg:'くらべる日を入れると、ここに並べて出します。'};
   if(!moneyReady(m)) return {msg:'上の「まずはこれだけ」を先に入れてください。'};
-  if(c.income==='' ) return {msg:'働いている間の手取り（1年あたり）を入れてください。'};
+  if(c.income==='' ) return {msg:'「働いている間の給与など（手取り・1年あたり）」を入れてください。いまの給与を入れるのはここです。'};
   const y = daysBetween(A,B)/365.25;
   if(Math.abs(y)<1/365) return {msg:'2つの日が同じです。'};
   const a = calc(m);
@@ -865,6 +873,8 @@ function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKey
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
 { const t=new URLSearchParams(location.search).get('tab'); const b=t&&document.querySelector('nav button[data-tab="'+CSS.escape(t)+'"]'); if(b) b.click(); }
+$('goCmpIncome').onclick=()=>{ const el=document.querySelector('[data-c="income"]'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.focus({preventScroll:true}); };
+$('goWorkIncome').onclick=()=>{ $('moreBox').open=true; const el=document.querySelector('[data-m="work"]'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.focus({preventScroll:true}); };
 $('ver').textContent='つぎの暮らしノート '+VERSION+' ・ 記録はこの端末の中だけ';
 // 日をまたいで開き直したとき、日数を作り直す
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderAll(); });
