@@ -77,6 +77,19 @@ section{display:none}section.on{display:block}
 .week7{display:flex;gap:3px;margin-top:2px}
 .week7 i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
 .week7 i.d{background:var(--main)}
+.streak{display:flex;align-items:baseline;gap:8px;margin:8px 0 2px}
+.streak b{font-size:28px;color:var(--main);font-weight:800}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+.cal div{aspect-ratio:1;border-radius:8px;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--sub)}
+.cal div.on{color:#fff;font-weight:700}
+.cal .head{background:none;font-size:12px;aspect-ratio:auto}
+.cal .today{outline:2px solid var(--main);outline-offset:1px}
+.board{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.board span{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card)}
+.board span.done{background:var(--main);border-color:var(--main);color:#fff}
+.board span.now{border-color:var(--main);border-width:3px;font-size:18px}
+.board span.goal{border:0;font-size:24px;background:none}
+.board .link{flex:none;width:12px;height:2px;background:var(--line);border:0;border-radius:0}
 .msg{border-radius:14px;padding:10px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-word;font-size:16px}
 .msg.me{background:var(--main);color:#fff;margin-left:40px}
 .msg.bot{background:var(--card);border:1px solid var(--line);margin-right:12px}
@@ -115,6 +128,7 @@ section{display:none}section.on{display:block}
   <div class="card" id="habitCard">
     <h2>きょうの ならし運転</h2>
     <div class="sub">「理想の1日」を、いまのうちから少しずつ。できたら押すだけです。</div>
+    <div id="streak"></div>
     <div id="habitList"></div>
     <div id="habitFoot"></div>
   </div>
@@ -203,6 +217,11 @@ section{display:none}section.on{display:block}
 <!-- やること -->
 <section id="todo">
   <div class="card">
+    <h2>準備のみち</h2>
+    <div class="sub">やることが1つ終わるたびに、コマが1マス進みます。</div>
+    <div id="board"></div>
+  </div>
+  <div class="card">
     <h2>退職の前後にやること</h2>
     <div id="todoList"></div>
     <div class="add">
@@ -247,6 +266,11 @@ section{display:none}section.on{display:block}
     <textarea id="dayText" rows="10" style="margin-top:8px"></textarea>
     <div style="margin-top:10px"><button id="daySave">保存する</button> <span class="sub" id="daySaved"></span></div>
     <div class="sub" style="margin-top:6px">書き直しても、できた日の記録は残ります（行を消すと、その行の記録も消えます）。</div>
+  </div>
+  <div class="card">
+    <h2>この4週間</h2>
+    <div class="sub">できた日を塗っていきます。色が濃いほど、その日にできた数が多い日です。</div>
+    <div id="cal"></div>
   </div>
   <div class="card">
     <h2>これまでの記録</h2>
@@ -307,7 +331,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v3.0';
+const VERSION = 'v3.1';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -781,13 +805,56 @@ function toggleHabit(id){
   const i=arr.indexOf(id);
   if(i<0) arr.push(id); else arr.splice(i,1);
   if(arr.length) data.log[d]=arr; else delete data.log[d];
-  save(); renderHabit();
+  save(); renderHabit(); renderStreak(); renderCal(); renderDayStats();
 }
 // 直近7日（きょうを含む）でできた日
 function last7(id){
   const days=[];
   for(let k=6;k>=0;k--){ const d=addDays(todayYmd(), -k); days.push((data.log[d]||[]).includes(id)); }
   return days;
+}
+// 連続日数：1日1つでも押した日を「できた日」と数える
+function streakInfo(){
+  const has=d=>((data.log[d]||[]).length>0);
+  let cur=0, start=has(todayYmd()) ? todayYmd() : addDays(todayYmd(),-1);
+  for(let d=start; has(d); d=addDays(d,-1)) cur++;
+  const days=Object.keys(data.log).filter(has).sort();
+  let best=0, run=0, prev=null;
+  for(const d of days){ run = (prev && daysBetween(prev,d)===1) ? run+1 : 1; best=Math.max(best,run); prev=d; }
+  return {cur, best, todayDone:has(todayYmd())};
+}
+function renderStreak(){
+  const box=$('streak'); box.textContent='';
+  const s=streakInfo();
+  if(!s.cur && !s.best) return;
+  const line=document.createElement('div'); line.className='streak';
+  const em=document.createElement('span'); em.textContent='🔥'; em.style.fontSize='24px';
+  const n=document.createElement('b'); n.textContent=s.cur+'日';
+  const t=document.createElement('span'); t.textContent = s.cur ? (s.todayDone?'つづいています':'つづいています（きょう押すと、あしたにつながります）') : 'とぎれています';
+  line.append(em,n,t); box.append(line);
+  const sub=document.createElement('div'); sub.className='sub';
+  sub.textContent = `いちばん長かったのは ${s.best}日`+(s.cur&&s.cur>=s.best?'（いま更新中！）':'');
+  box.append(sub);
+}
+// この4週間のカレンダー（日曜はじまり）
+function renderCal(){
+  const box=$('cal'); box.textContent='';
+  const total=Math.max(1, data.day.length);
+  const end=parseYmd(todayYmd()); const endDow=end.getDay();
+  const first=addDays(todayYmd(), -(21+endDow));  // 今週の日曜から3週間さかのぼった日曜
+  const g=document.createElement('div'); g.className='cal';
+  for(const w of ['日','月','火','水','木','金','土']){ const h=document.createElement('div'); h.className='head'; h.textContent=w; g.append(h); }
+  for(let i=0;i<28;i++){
+    const d=addDays(first,i), n=(data.log[d]||[]).length, cell=document.createElement('div');
+    const dt=parseYmd(d);
+    cell.textContent=dt.getDate();
+    if(n>0){ cell.classList.add('on'); cell.style.background='var(--main)'; cell.style.opacity=(0.35+0.65*Math.min(1,n/total)).toFixed(2); }
+    if(d===todayYmd()) cell.classList.add('today');
+    if(d>todayYmd()) cell.style.visibility='hidden';
+    cell.title=jpDate(d)+(n>0?`：${n}件`:'：記録なし');
+    g.append(cell);
+  }
+  box.append(g);
 }
 function renderHabit(){
   const list=$('habitList'), foot=$('habitFoot'); list.textContent=''; foot.textContent='';
@@ -845,6 +912,30 @@ function todoRow(x){
   const del=document.createElement('button'); del.className='x'; del.textContent='✕'; del.title='けす';
   del.onclick=()=>{ if(confirm('「'+x.text+'」をけしますか？')){ data.todos=data.todos.filter(y=>y!==x); save(); renderAll(); } };
   row.append(cb,t,del); return row;
+}
+// 準備のみち（すごろく）：やることが終わるとコマが進む
+function renderBoard(){
+  const box=$('board'); box.textContent='';
+  const all=sortedTodos();
+  if(!all.length){ const p=document.createElement('div'); p.className='empty'; p.textContent='やることを足すと、ここに道ができます。'; box.append(p); return; }
+  const done=all.filter(x=>x.done).length;
+  const row=document.createElement('div'); row.className='board';
+  all.forEach((x,i)=>{
+    if(i) { const l=document.createElement('span'); l.className='link'; row.append(l); }
+    const c=document.createElement('span');
+    if(x.done){ c.className='done'; c.textContent='✓'; }
+    else if(i===done){ c.className='now'; c.textContent='🚶'; }
+    else c.textContent=i+1;
+    c.title=x.text;
+    row.append(c);
+  });
+  const l=document.createElement('span'); l.className='link'; row.append(l);
+  const goal=document.createElement('span'); goal.className='goal'; goal.textContent='🏁'; goal.title='退職の日'; row.append(goal);
+  box.append(row);
+  const n=document.createElement('div'); n.className='note'; n.style.marginTop='10px';
+  n.textContent = done===all.length ? 'ゴールです。準備はぜんぶ終わりました 🎉'
+    : `${all.length}マス中 ${done}マス進みました。つぎは「${all.filter(x=>!x.done)[0].text}」です。`;
+  box.append(n);
 }
 function renderTodos(){
   const list=$('todoList'), dl=$('doneList'); list.textContent=''; dl.textContent='';
@@ -1125,7 +1216,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 });
 
 function fillAll(){ fillMoney(); $('dayText').value=data.day.map(x=>x.text).join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
-function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHabit(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); }
+function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); renderBoard(); }
 
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
