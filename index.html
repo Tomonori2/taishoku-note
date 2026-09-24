@@ -12,6 +12,15 @@
 :root{
   --bg:#f3efe6; --card:#fffdf8; --ink:#2b2a27; --sub:#6d6a62; --line:#e2dccf;
   --main:#2f6f62; --main-soft:#dcebe6; --warn:#b3471f; --warn-soft:#f8e3da; --ok:#2e7d4f;
+  --field:#fff; --onMain:#fff;
+}
+/* スマホが夜モードのときは、目にやさしい暗い色にする */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#191c1b; --card:#232725; --ink:#ece8e0; --sub:#a6a29a; --line:#3b403d;
+    --main:#7fc4b2; --main-soft:#25403a; --warn:#ef8a63; --warn-soft:#42241a; --ok:#7fc48f;
+    --field:#1d211f; --onMain:#12201c;
+  }
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -34,10 +43,11 @@ main{padding:0 16px;max-width:560px;margin:0 auto}
 .note{background:var(--main-soft);border-radius:12px;padding:10px 12px;font-size:15px;margin-top:10px}
 .note.warn{background:var(--warn-soft)}
 label.f{display:block;margin:10px 0 2px;font-size:14px;color:var(--sub)}
-input[type=number],input[type=text],input[type=date],input[type=month],input[type=password],textarea{width:100%;font:inherit;padding:10px 12px;
-  border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input[type=number],input[type=text],input[type=date],input[type=month],input[type=password],textarea,select{width:100%;font:inherit;padding:10px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
+
 .unit{display:flex;align-items:center;gap:8px}.unit span{white-space:nowrap;color:var(--sub)}
-button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--main);color:#fff;font-weight:700;cursor:pointer}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--main);color:var(--onMain);font-weight:700;cursor:pointer}
 button.ghost{background:transparent;color:var(--main);border:1px solid var(--main)}
 button.small{padding:6px 10px;font-size:14px}
 button.danger{background:var(--warn)}
@@ -71,7 +81,7 @@ section{display:none}section.on{display:block}
   padding:12px 14px;margin:8px 0;font-size:16px;color:var(--ink);text-align:left;font-weight:600;cursor:pointer}
 .hb .mark{width:28px;height:28px;flex:none;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:transparent}
 .hb.on{background:var(--main-soft);border-color:var(--main)}
-.hb.on .mark{background:var(--main);border-color:var(--main);color:#fff}
+.hb.on .mark{background:var(--main);border-color:var(--main);color:var(--onMain)}
 .hb .t{flex:1;min-width:0;word-break:break-word}
 .hb .week{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap}
 .week7{display:flex;gap:3px;margin-top:2px}
@@ -81,17 +91,17 @@ section{display:none}section.on{display:block}
 .streak b{font-size:28px;color:var(--main);font-weight:800}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
 .cal div{aspect-ratio:1;border-radius:8px;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--sub)}
-.cal div.on{color:#fff;font-weight:700}
+.cal div.on{color:var(--onMain);font-weight:700}
 .cal .head{background:none;font-size:12px;aspect-ratio:auto}
 .cal .today{outline:2px solid var(--main);outline-offset:1px}
 .board{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .board span{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card)}
-.board span.done{background:var(--main);border-color:var(--main);color:#fff}
+.board span.done{background:var(--main);border-color:var(--main);color:var(--onMain)}
 .board span.now{border-color:var(--main);border-width:3px;font-size:18px}
 .board span.goal{border:0;font-size:24px;background:none}
 .board .link{flex:none;width:12px;height:2px;background:var(--line);border:0;border-radius:0}
 .msg{border-radius:14px;padding:10px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-word;font-size:16px}
-.msg.me{background:var(--main);color:#fff;margin-left:40px}
+.msg.me{background:var(--main);color:var(--onMain);margin-left:40px}
 .msg.bot{background:var(--card);border:1px solid var(--line);margin-right:12px}
 .msg.wait{color:var(--sub)}
 .msg .todoAdd{display:block;margin-top:8px;white-space:normal;text-align:left}
@@ -154,36 +164,36 @@ section{display:none}section.on{display:block}
       <div class="add"><button class="ghost small" id="goNowIncome">①をひらく</button><button class="ghost small" id="goCmpIncome">②をひらく</button><button class="ghost small" id="goWorkIncome">③をひらく</button></div>
     </details>
     <label class="f">はたらき方</label>
-    <select data-m="job" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
+    <select data-m="job">
       <option value="">えらぶ</option><option>会社員</option><option>公務員</option><option>自営業・フリーランス</option><option>パート・アルバイト</option><option>その他</option>
     </select>
     <label class="f">生まれた年と月</label>
     <input type="month" data-m="birth">
     <div class="sub" id="ageNote"></div>
-    <label class="f">いまの資産（貯金・投資などの合計。ローンがあれば引いた額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
-    <label class="f">いまの手取り（ひと月・家族の合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="income"><span>万円/月</span></div>
+    <label class="f">いまの資産（貯金・投資などの合計。ローンがあれば引いた額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets" placeholder="例：2500"><span>万円</span></div>
+    <label class="f">いまの手取り（ひと月・家族の合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="income" placeholder="例：40"><span>万円/月</span></div>
     <div class="sub" id="saveNote">退職の日までの間、「手取り − 生活費」がたまっていく計算にします。ボーナスも足して12で割ると、より近い数字になります。</div>
-    <label class="f">ひと月の生活費（家ぜんたい）</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
+    <label class="f">ひと月の生活費（家ぜんたい）</label><div class="unit"><input type="number" inputmode="decimal" data-m="living" placeholder="例：26"><span>万円/月</span></div>
     <div class="sub">食費・光熱費・通信費・保険・車など、毎月出ていくお金の合計です。家賃や住宅ローンがあれば、それも入れてください。</div>
-    <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension"><span>万円/月</span></div>
+    <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension" placeholder="例：23"><span>万円/月</span></div>
     <details class="sub" style="margin-top:4px"><summary>年金の額はどこで分かる？</summary>
       毎年誕生月に届く「ねんきん定期便」か、ネットの「ねんきんネット」で分かります。50歳以上は「このまま働いた場合の見込み額」、50歳未満は「これまでの加入実績の額」が書かれています（50歳未満の額は実際より少なめに出ます）。年額なので12で割って入れてください。</details>
-    <label class="f">退職金・退職手当の見込み（手取り）</label><div class="unit"><input type="number" inputmode="decimal" data-m="severance"><span>万円</span></div>
+    <label class="f">退職金・退職手当の見込み（手取り）</label><div class="unit"><input type="number" inputmode="decimal" data-m="severance" placeholder="例：1800"><span>万円</span></div>
     <details class="sub" style="margin-top:4px"><summary>手取りって、税金はどのくらい？</summary>
       退職金には「退職所得控除」という大きな非課税の枠があり、長く勤めた人ほど税金はほとんどかからないことが多いです。勤め先から聞いた額が税金を引く前（額面）なら、「手取りだといくらか」も聞いておくと確実です。</details>
   </div>
   <details class="card" id="moreBox">
     <summary style="font-weight:700;cursor:pointer">くわしく入れる（入れるとより正確に）</summary>
     <label class="f">そのほか入ってくるお金（失業給付・企業年金の一時金など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="otherIn"><span>万円</span></div>
-    <label class="f">退職後に働いて得るお金（給与・パート代など。年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work"><span>万円/月</span></div>
-    <label class="f">もしもの予備（手をつけずに残しておきたい額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
+    <label class="f">退職後に働いて得るお金（給与・パート代など。年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work" placeholder="例：10"><span>万円/月</span></div>
+    <label class="f">もしもの予備（手をつけずに残しておきたい額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve" placeholder="例：500"><span>万円</span></div>
     <div class="sub">病気や介護、家の修理などに備えて、最後まで残しておきたい額です。グラフの赤い点線になります。</div>
     <label class="f">退職翌年の住民税</label><div class="unit"><input type="number" inputmode="decimal" data-m="tax"><span>万円</span></div>
     <label class="f">そのほか一度だけ出るお金（車・家の修理など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="oneTime"><span>万円</span></div>
     <label class="f">年金を受け取りはじめる年齢（60〜75歳）</label><div class="unit"><input type="number" inputmode="numeric" min="60" max="75" data-m="pensionAge"><span>歳</span></div>
     <div class="sub" id="penNote"></div>
     <label class="f">物価の上がり方</label>
-    <select data-m="infl" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
+    <select data-m="infl">
       <option value="0">考えない</option><option value="1">年1%上がる</option><option value="2">年2%上がる</option>
     </select>
     <div class="sub">生活費が毎年この割合で上がる計算にします。年金も上がりますが、物価ほどは上がらない仕組みがあるため、物価より年0.5%低い上がり方で計算します（目安）。</div>
@@ -195,7 +205,7 @@ section{display:none}section.on{display:block}
     <div class="sub">退職の日がずれたら、余白がどう変わるかを並べます。</div>
     <label class="f">くらべる日（例：1年あと）</label>
     <input type="date" data-c="date">
-    <label class="f">働いている間の給与など（手取り・1年あたり・空なら上の手取り×12）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
+    <label class="f">働いている間の給与など（手取り・1年あたり・空なら上の手取り×12）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income" placeholder="例：480"><span>万円/年</span></div>
     <div class="sub">いまの給与を入れるのはここです。ボーナスもふくめた、手取りの1年ぶんを入れてください（月の手取り×12＋ボーナスの手取り でだいたい出ます）。</div>
     <label class="f">その日に辞めたときの退職金・手取り（空なら上と同じ）</label><div class="unit"><input type="number" inputmode="decimal" data-c="severance"><span>万円</span></div>
     <div id="cmpResult" style="margin-top:12px"></div>
@@ -250,7 +260,18 @@ section{display:none}section.on{display:block}
   <div class="card">
     <h2>退職の相談（AI）</h2>
     <div class="sub">年金・健康保険・退職金の仕組みや、迷っていることの整理を手伝います。「辞めるべき」は決めません。考える材料と、確かめる先をお返しします。</div>
-    <div id="aiNoKey" class="note warn" hidden>使うには Google の Gemini の「APIキー」が要ります（無料で取れます）。「設定」で入れてください。キーが無くても、ほかの画面はすべて使えます。</div>
+    <details id="aiNoKey" class="note warn" hidden>
+      <summary style="font-weight:700;cursor:pointer">使うには「キー」が要ります（無料・3分）</summary>
+      <div style="margin-top:8px">AIに聞くには、Google の Gemini という道具のキー（合いカギのような文字）が要ります。無料で取れます。キーが無くても、ほかの画面はすべて使えます。</div>
+      <ol style="margin:8px 0;padding-left:22px">
+        <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> を開き、Googleアカウントでログインします</li>
+        <li>「APIキーを作成（Create API key）」を押します</li>
+        <li>出てきた <b>AIza…</b> で始まる文字をコピーします</li>
+        <li>このアプリの「設定」→「AI相談のキー」に貼って保存します</li>
+      </ol>
+      <div>キーは、この端末の中だけに保存されます。ほかの人には見えません。</div>
+      <div class="add"><button class="ghost small" id="goKey">設定をひらく</button></div>
+    </details>
   </div>
   <div id="chat"></div>
   <div class="card">
@@ -280,6 +301,8 @@ section{display:none}section.on{display:block}
     <h2>この4週間</h2>
     <div class="sub">できた日を塗っていきます。色が濃いほど、その日にできた数が多い日です。枠が付いているのが今日です。全部を毎日できなくてかまいません。塗れた日が少しずつ増えれば十分です。</div>
     <div id="cal"></div>
+    <div class="sub" style="margin-top:8px">日をタップすると、その日の分をあとから記録できます（押し忘れた日の直し用）。</div>
+    <div id="calEdit"></div>
   </div>
   <div class="card">
     <h2>これまでの記録</h2>
@@ -325,6 +348,21 @@ section{display:none}section.on{display:block}
     </div>
     <div class="sub" id="bkMsg"></div>
   </div>
+  <div class="card" id="installCard" hidden>
+    <h2>ホーム画面に置く</h2>
+    <div class="sub">毎日つかう道具なので、ホーム画面に置いておくと1タップで開けます。ブラウザの掃除で記録が消えにくくもなります。</div>
+    <details class="sub" style="margin-top:8px"><summary>やり方</summary>
+      <div style="margin-top:6px"><b>Android（Chrome）</b>：右上の ⋮ →「ホーム画面に追加」</div>
+      <div style="margin-top:6px"><b>iPhone（Safari）</b>：下の <b>□↑</b>（共有）→「ホーム画面に追加」</div>
+      <div style="margin-top:6px">※ GoogleアプリやLINEの中のブラウザでは出ません。ChromeかSafariで開いてください。</div>
+    </details>
+    <div class="add"><button class="ghost small" id="installHide">この案内を消す</button></div>
+  </div>
+  <div class="card">
+    <h2>記録を全部消す</h2>
+    <div class="sub">このアプリに入れた数字・やること・ならし運転の記録を、すべて消します。消すと元に戻せません。先に「データの控え」を取ってからにしてください。</div>
+    <div class="add" style="margin-top:8px"><button class="danger" id="wipeAll">全部消す</button> <span class="sub" id="wipeMsg"></span></div>
+  </div>
 </section>
 
 <div class="ver" id="ver"></div>
@@ -340,7 +378,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v3.2';
+const VERSION = 'v3.3';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -892,10 +930,46 @@ function renderCal(){
     if(n>0){ cell.classList.add('on'); cell.style.background='var(--main)'; cell.style.opacity=(0.35+0.65*Math.min(1,n/total)).toFixed(2); }
     if(d===todayYmd()) cell.classList.add('today');
     if(d>todayYmd()) cell.style.visibility='hidden';
+    else { cell.style.cursor='pointer'; cell.onclick=()=>openDayEdit(d); }
     cell.title=jpDate(d)+(n>0?`：${n}件`:'：記録なし');
     g.append(cell);
   }
   box.append(g);
+}
+// あとから、その日の分を記録する
+function openDayEdit(d){   // 同じ日をもう一度押したら閉じる
+  const box=$('calEdit');
+  box.dataset.day = (box.dataset.day===d) ? '' : d;
+  renderDayEdit();
+}
+function renderDayEdit(){
+  const box=$('calEdit'), d=box.dataset.day;
+  box.textContent='';
+  if(!d) return;
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--main-soft);border-radius:12px;padding:12px;margin-top:8px';
+  const ttl=document.createElement('div'); ttl.style.fontWeight='700';
+  ttl.textContent=jpDate(d)+(d===todayYmd()?'（きょう）':'')+' の記録';
+  card.append(ttl);
+  if(!data.day.length){ const p=document.createElement('div'); p.className='sub'; p.textContent='上の欄に「理想の1日」を書くと、ここで記録できます。'; card.append(p); }
+  for(const it of data.day){
+    const on=(data.log[d]||[]).includes(it.id);
+    const b=document.createElement('button'); b.className='hb'+(on?' on':''); b.style.margin='6px 0';
+    const mk=document.createElement('span'); mk.className='mark'; mk.textContent='✓';
+    const t=document.createElement('span'); t.className='t'; t.textContent=it.text;
+    b.append(mk,t);
+    b.onclick=()=>{
+      const arr=data.log[d]||[], i=arr.indexOf(it.id);
+      if(i<0) arr.push(it.id); else arr.splice(i,1);
+      if(arr.length) data.log[d]=arr; else delete data.log[d];
+      save(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderDayEdit();
+    };
+    card.append(b);
+  }
+  const close=document.createElement('button'); close.className='ghost small'; close.style.marginTop='6px'; close.textContent='閉じる';
+  close.onclick=()=>{ box.dataset.day=''; renderDayEdit(); };
+  card.append(close);
+  box.append(card);
 }
 function renderHabit(){
   const list=$('habitList'), foot=$('habitFoot'); list.textContent=''; foot.textContent='';
@@ -950,9 +1024,36 @@ function todoRow(x){
     const hint = !x.due && x.rel!=null ? `・${relText(x.rel)}` : '';
     d.className='due'+(left<0?' late':''); d.textContent = (left<0 ? `${jpDate(due)}まで（${-left}日すぎています）` : left===0 ? 'きょうまで' : `${jpDate(due)}まで（あと${left}日）`)+hint; t.append(d); }
   else if(x.rel!=null){ const d=document.createElement('div'); d.className='due'; d.textContent=`期限の目安：${relText(x.rel)}（退職の日を入れると日付が出ます）`; t.append(d); }
+  const edit=document.createElement('button'); edit.className='x'; edit.textContent='✎'; edit.title='直す';
+  edit.onclick=()=>openTodoEdit(x, row);
   const del=document.createElement('button'); del.className='x'; del.textContent='✕'; del.title='けす';
   del.onclick=()=>{ if(confirm('「'+x.text+'」をけしますか？')){ data.todos=data.todos.filter(y=>y!==x); save(); renderAll(); } };
-  row.append(cb,t,del); return row;
+  row.append(cb,t,edit,del); return row;
+}
+// やることの文と期限を、あとから直す
+function openTodoEdit(x, row){
+  if(row.nextSibling && row.nextSibling.classList && row.nextSibling.classList.contains('todoEdit')){ row.nextSibling.remove(); return; }
+  const box=document.createElement('div'); box.className='todoEdit';
+  box.style.cssText='background:var(--main-soft);border-radius:12px;padding:10px 12px;margin:2px 0 10px';
+  const ti=document.createElement('input'); ti.type='text'; ti.maxLength=100; ti.value=x.text;
+  const l1=document.createElement('label'); l1.className='f'; l1.textContent='やること';
+  const l2=document.createElement('label'); l2.className='f'; l2.textContent='いつまでに（空にすると期限なし）';
+  const di=document.createElement('input'); di.type='date'; di.value=dueOf(x)||'';
+  const hint=document.createElement('div'); hint.className='sub';
+  hint.textContent = x.rel!=null && !x.due ? `いまは「${relText(x.rel)}」で自動に入っています。日付を入れると、そちらが優先されます。` : '';
+  const btns=document.createElement('div'); btns.className='add';
+  const ok=document.createElement('button'); ok.className='small'; ok.textContent='保存する';
+  ok.onclick=()=>{
+    const t=ti.value.trim(); if(!t) return alert('やることを書いてください。');
+    x.text=t.slice(0,100);
+    if(di.value && parseYmd(di.value)) x.due=di.value; else x.due='';
+    save(); renderAll();
+  };
+  const cancel=document.createElement('button'); cancel.className='ghost small'; cancel.textContent='やめる';
+  cancel.onclick=()=>box.remove();
+  btns.append(ok, cancel);
+  box.append(l1, ti, l2, di, hint, btns);
+  row.after(box); ti.focus();
 }
 // 準備のみち（すごろく）：やることが終わるとコマが進む
 function renderBoard(){
@@ -1246,6 +1347,20 @@ $('keySave').onclick=()=>{ const v=$('keyIn').value.trim(); if(!v) return;
 $('keyDel').onclick=()=>{ if(!confirm('保存したキーを消しますか？')) return; try{ localStorage.removeItem(KEY_STORE); }catch(e){} $('keyMsg').textContent='消しました'; updateAiUI(); };
 function showKeyState(){ $('keyIn').placeholder = getKey() ? '保存済み（入れ直すときだけ入力）' : 'AIza… で始まる文字'; }
 
+// ---------- ホーム画面に置く案内・全部消す ----------
+$('goKey').onclick=()=>{ document.querySelector('nav button[data-tab="set"]').click(); $('keyIn').scrollIntoView({block:'center'}); $('keyIn').focus({preventScroll:true}); };
+function standalone(){ try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone===true; }catch(e){ return false; } }
+function renderInstall(){ $('installCard').hidden = standalone() || data.installHidden===true; }
+$('installHide').onclick=()=>{ data.installHidden=true; save(); renderInstall(); };
+$('wipeAll').onclick=()=>{
+  if(!confirm('このアプリの記録を全部消します。よろしいですか？（控えを取っていないと戻せません）')) return;
+  if(!confirm('本当に消しますか？ 数字・やること・ならし運転の記録がすべて消えます。')) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  data=blank(); save(); fillAll(); renderAll();
+  $('wipeMsg').textContent='消しました。はじめの状態に戻りました。';
+  document.querySelector('nav button[data-tab="home"]').click(); window.scrollTo(0,0);
+};
+
 // ---------- はじめての人へ ----------
 $('welcomeOk').onclick=()=>{ data.welcomed=true; save(); $('welcome').hidden=true; };
 
@@ -1257,7 +1372,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 });
 
 function fillAll(){ fillMoney(); $('dayText').value=data.day.map(x=>x.text).join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
-function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderSetup(); renderProgress(); renderHomeMoney(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); renderBoard(); }
+function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderInstall(); renderCountdown(); renderSetup(); renderProgress(); renderHomeMoney(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); renderBoard(); }
 
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
