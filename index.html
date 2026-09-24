@@ -66,6 +66,17 @@ section{display:none}section.on{display:block}
 .legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--main);vertical-align:middle;margin-right:4px}
 .legend i.b{border-top-style:dashed;border-color:#c98a2e}
 .legend i.r{border-top:2px dashed var(--warn)}
+.legend i.a{border-top:3px solid #7b4bb7}
+.hb{display:flex;align-items:center;gap:10px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin:8px 0;font-size:16px;color:var(--ink);text-align:left;font-weight:600;cursor:pointer}
+.hb .mark{width:28px;height:28px;flex:none;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:transparent}
+.hb.on{background:var(--main-soft);border-color:var(--main)}
+.hb.on .mark{background:var(--main);border-color:var(--main);color:#fff}
+.hb .t{flex:1;min-width:0;word-break:break-word}
+.hb .week{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap}
+.week7{display:flex;gap:3px;margin-top:2px}
+.week7 i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.week7 i.d{background:var(--main)}
 .msg{border-radius:14px;padding:10px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-word;font-size:16px}
 .msg.me{background:var(--main);color:#fff;margin-left:40px}
 .msg.bot{background:var(--card);border:1px solid var(--line);margin-right:12px}
@@ -101,11 +112,13 @@ section{display:none}section.on{display:block}
     <div class="sub" id="prgText"></div>
     <div id="nextTodo"></div>
   </div>
-  <div class="card" id="homeMoney"></div>
-  <div class="card">
-    <h2>理想の1日</h2>
-    <ol class="day" id="homeDay"></ol>
+  <div class="card" id="habitCard">
+    <h2>きょうの ならし運転</h2>
+    <div class="sub">「理想の1日」を、いまのうちから少しずつ。できたら押すだけです。</div>
+    <div id="habitList"></div>
+    <div id="habitFoot"></div>
   </div>
+  <div class="card" id="homeMoney"></div>
 </section>
 
 <!-- お金 -->
@@ -167,6 +180,17 @@ section{display:none}section.on{display:block}
     <div id="cmpResult" style="margin-top:12px"></div>
   </div>
   <div class="card">
+    <h2>資産の記録（月に1回）</h2>
+    <div class="sub">そのときの資産を入れておくと、計画とのズレが分かります。上のグラフに ● で重なります。</div>
+    <div class="add" style="margin-top:8px">
+      <input type="number" inputmode="decimal" id="actAmt" placeholder="いまの資産" style="flex:1 1 140px">
+      <span class="sub" style="align-self:center">万円</span>
+      <input type="date" id="actDate" style="flex:0 1 160px">
+      <button id="actAdd">記録する</button>
+    </div>
+    <div id="actList" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
     <h2>年金を受け取りはじめる年齢でくらべる</h2>
     <div id="penCmp"></div>
   </div>
@@ -219,9 +243,14 @@ section{display:none}section.on{display:block}
 <section id="day">
   <div class="card">
     <h2>退職したら、こんな1日にしたい</h2>
-    <div class="sub">1行に1つずつ書きます。ホーム画面にも出ます。</div>
+    <div class="sub">1行に1つずつ書きます。ホーム画面の「きょうの ならし運転」に出て、できた日を記録できます。</div>
     <textarea id="dayText" rows="10" style="margin-top:8px"></textarea>
     <div style="margin-top:10px"><button id="daySave">保存する</button> <span class="sub" id="daySaved"></span></div>
+    <div class="sub" style="margin-top:6px">書き直しても、できた日の記録は残ります（行を消すと、その行の記録も消えます）。</div>
+  </div>
+  <div class="card">
+    <h2>これまでの記録</h2>
+    <div id="dayStats"></div>
   </div>
 </section>
 
@@ -249,7 +278,7 @@ section{display:none}section.on{display:block}
   <div class="card">
     <h2>データの控え（バックアップ）</h2>
     <div class="sub">このアプリの記録はスマホの中だけにあります。ブラウザの掃除や機種変更で消えるので、ときどき控えを取ってください。</div>
-    <div class="note warn">🔒 控えにはお金の数字が入っています。人に送ったり、公開の場所に置いたりしないでください。</div>
+    <div class="note warn">🔒 控えにはお金の数字と、ならし運転の記録が入っています。人に送ったり、公開の場所に置いたりしないでください。</div>
     <div class="add">
       <button id="bkFile">ファイルに保存</button>
       <button class="ghost" id="bkCopy">文字をコピー</button>
@@ -278,7 +307,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v2.8';
+const VERSION = 'v3.0';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -321,7 +350,12 @@ function blank(){
     money:{job:'',birth:'',assets:'',income:'',living:'',pension:'',severance:'',otherIn:'',work:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90,infl:0},
     cmp:{date:'',income:'',severance:''},
     todos: DEFAULT_TODOS.map(([t,rel],i)=>({id:Date.now()+i, text:t, due:'', rel, done:false, doneAt:''})),
-    day: DEFAULT_DAY.slice() };
+    // 「理想の1日」は番号つきで持つ（文を書き直しても記録が続くように）
+    day: DEFAULT_DAY.map((t,i)=>({id:i+1, text:t})),
+    log: {},          // {'2026-09-24':[できた項目の番号]}
+    nextDayId: DEFAULT_DAY.length+1,  // 番号は使い回さない（消した行の記録が別の行に付かないように）
+    actuals: [],      // 実際の資産の記録 [{date:'2026-09-24', amt:2500}]
+    lastBackup: '' };
 }
 let data;
 function load(){
@@ -330,6 +364,12 @@ function load(){
   for(const k of Object.keys(b)) if(data[k]===undefined) data[k]=b[k];
   data.money = Object.assign({}, b.money, data.money||{});
   data.cmp = Object.assign({}, b.cmp, data.cmp||{});
+  // 前の版の「理想の1日」は文字だけの並びだったので、番号つきに作り直す
+  if(Array.isArray(data.day) && data.day.some(x=>typeof x==='string'))
+    data.day = data.day.map((x,i)=> typeof x==='string' ? {id:i+1, text:x} : x);
+  if(!data.log || typeof data.log!=='object' || Array.isArray(data.log)) data.log={};
+  const usedIds=[...data.day.map(x=>x.id), ...Object.values(data.log).flat()].filter(Number.isInteger);
+  if(!Number.isInteger(data.nextDayId) || data.nextDayId<=Math.max(0,...usedIds)) data.nextDayId=Math.max(0,...usedIds)+1;
   // 前の版で入った「最初のやること」にも、あとから期限の目安をつける（自分で期限を入れたものは触らない）
   for(const x of data.todos){
     if(x.rel!==undefined || x.due) continue;
@@ -337,7 +377,12 @@ function load(){
     if(hit && hit[1]!=null) x.rel=hit[1];
   }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){ alert('保存できませんでした。ブラウザの設定を確認してください。'); } }
+function save(){
+  // 「ならし運転」の記録は直近180日ぶんだけ残す
+  const keep=addDays(todayYmd(), -180);
+  for(const d of Object.keys(data.log||{})) if(d<keep) delete data.log[d];
+  try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){ alert('保存できませんでした。ブラウザの設定を確認してください。'); }
+}
 
 // ---------- お金の計算 ----------
 function num(v){ const n=parseFloat(v); return isFinite(n)?n:0; }
@@ -458,7 +503,7 @@ function renderAgeNote(){
 function renderMoney(){
   const m=data.money, box=$('moneyResult'); box.textContent='';
   const h=document.createElement('h2'); h.textContent='足りるかどうか'; box.append(h);
-  renderAgeNote(); renderSaveNote(); renderPenNote(); renderPenCompare();
+  renderAgeNote(); renderSaveNote(); renderPenNote(); renderPenCompare(); renderActuals();
   if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下の「'+missing(m).join('」「')+'」を入れると計算します。年金と退職金も入れると、より正確になります。'; box.append(p); return; }
   const c=calc(m), up=calc(m, num(m.living)+1), infl=num(m.infl)>0;
   const rows=[
@@ -536,6 +581,74 @@ function renderCompare(){
   box.append(s);
 }
 
+// ---------- 資産の記録（実際の額）と、計画とのズレ ----------
+function ageAtDate(d){
+  const m=data.money;
+  if(birthOk(m)) return daysBetween(m.birth+'-01', d)/365.25;
+  if(!(ageOf(m)>0)) return null;
+  return nowAge() + daysBetween(todayYmd(), d)/365.25;
+}
+// 退職の日までに、いまから t 年ぶんでたまるお金
+function preSaveUntil(m, t){
+  const income=num(m.income), y=Math.min(Math.max(0,t), yearsToRetire());
+  if(!(income>0) || y<=0) return 0;
+  const living=num(m.living), g=num(m.infl)/100;
+  let sum=0;
+  for(let x=0; x<y-1e-9; ){ const h=Math.min(1/12, y-x); sum += (income - living*Math.pow(1+g, x+h/2))*12*h; x+=h; }
+  return sum;
+}
+function interp(pts, x){
+  if(x<=pts[0][0]) return pts[0][1];
+  for(let i=1;i<pts.length;i++){ const [x0,y0]=pts[i-1], [x1,y1]=pts[i];
+    if(x<=x1) return y0 + (y1-y0)*((x-x0)/((x1-x0)||1)); }
+  return pts.at(-1)[1];
+}
+// その日の「計画では、いくらのはず」（過去の日は分からないので null）
+function planAtDate(d){
+  const m=data.money;
+  if(!moneyReady(m)) return null;
+  const t=daysBetween(todayYmd(), d)/365.25;
+  if(t<-1/365) return null;
+  const yr=yearsToRetire();
+  if(t<=yr) return num(m.assets)+preSaveUntil(m, t);
+  const A=lifeA();
+  return interp(A.pts, ageOf(m)+(t-yr));
+}
+function renderActuals(){
+  const box=$('actList'); box.textContent='';
+  if(!$('actDate').value) $('actDate').value=todayYmd();
+  const list=(data.actuals||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  if(!list.length){ const p=document.createElement('div'); p.className='empty'; p.textContent='まだ記録がありません。月に1回、そのときの資産を入れておくと変化が見えます。'; box.append(p); return; }
+  for(const r of list){
+    const row=document.createElement('div'); row.className='row';
+    const s=document.createElement('span'); s.textContent=jpDate(r.date);
+    const v=document.createElement('b');
+    const plan=planAtDate(r.date), diff=plan==null?null:r.amt-plan;
+    v.textContent=man(r.amt)+(diff==null?'':`（計画より ${diff>=0?'+':'−'}${man(Math.abs(diff))}）`);
+    if(diff!=null) v.className = diff>=0?'plus':'minus';
+    const del=document.createElement('button'); del.className='x'; del.textContent='✕'; del.style.cssText='background:none;color:var(--sub);padding:2px 6px';
+    del.onclick=()=>{ if(confirm(jpDate(r.date)+' の記録をけしますか？')){ data.actuals=data.actuals.filter(x=>x!==r); save(); renderMoney(); } };
+    row.append(s,v,del); box.append(row);
+  }
+  const last=list[0], plan=planAtDate(last.date), diff=plan==null?null:last.amt-plan;
+  if(diff!=null){
+    const n=document.createElement('div'); n.className='note'+(diff<0?' warn':''); n.style.marginTop='8px';
+    n.textContent = Math.abs(diff)<1 ? '計画どおりに進んでいます。'
+      : diff>0 ? `いちばん新しい記録は、計画より ${man(diff)} 多いです。`
+               : `いちばん新しい記録は、計画より ${man(-diff)} 少ないです。生活費か予定を見直す目安にしてください。`;
+    box.append(n);
+  }
+}
+$('actAdd').onclick=()=>{
+  const amt=parseFloat($('actAmt').value), d=$('actDate').value;
+  if(!isFinite(amt)) return alert('資産の額を入れてください。');
+  if(!parseYmd(d)) return alert('日付を入れてください。');
+  data.actuals=(data.actuals||[]).filter(x=>x.date!==d);   // 同じ日は入れ直し
+  data.actuals.push({date:d, amt});
+  if(data.actuals.length>120) data.actuals=data.actuals.slice(-120);
+  $('actAmt').value=''; save(); renderMoney();
+};
+
 // ---------- 資産の移りかわり（グラフ） ----------
 // run() の結果をそのまま使う。最後に残る額 − 予備 ＝ 余白（calc と一致）。
 function lifeA(){ return run(data.money); }
@@ -548,7 +661,9 @@ function lifeText(l){
 }
 function drawChart(A, B){
   const NS='http://www.w3.org/2000/svg', W=320, H=190, pl=46, pr=10, pt=10, pb=24;
-  const all=A.pts.concat(B?B.pts:[]), res=num(data.money.reserve);
+  // 実際に記録した資産（年齢が分かるものだけ）
+  const acts=(data.actuals||[]).map(r=>({x:ageAtDate(r.date), y:r.amt})).filter(p=>p.x!=null).sort((a,b)=>a.x-b.x);
+  const all=A.pts.concat(B?B.pts:[], acts.map(p=>[p.x,p.y])), res=num(data.money.reserve);
   const x0=Math.min(...all.map(p=>p[0])), x1=Math.max(...all.map(p=>p[0]));
   let y0=Math.min(0,...all.map(p=>p[1])), y1=Math.max(res,...all.map(p=>p[1]))*1.08||1;
   const X=x=>pl+(x-x0)/((x1-x0)||1)*(W-pl-pr), Y=y=>pt+(y1-y)/((y1-y0)||1)*(H-pt-pb);
@@ -565,6 +680,10 @@ function drawChart(A, B){
   el('polygon',{points:`${X(A.pts[0][0])},${base} ${pts(A)} ${X(A.pts.at(-1)[0])},${base}`,fill:'var(--main)',opacity:.12});
   el('polyline',{points:pts(A),fill:'none',stroke:'var(--main)','stroke-width':3,'stroke-linejoin':'round'});
   if(B) el('polyline',{points:pts(B),fill:'none',stroke:'#c98a2e','stroke-width':2.5,'stroke-dasharray':'6 4'});
+  if(acts.length){
+    if(acts.length>1) el('polyline',{points:acts.map(p=>X(p.x).toFixed(1)+','+Y(p.y).toFixed(1)).join(' '),fill:'none',stroke:'#7b4bb7','stroke-width':2});
+    acts.forEach(p=>el('circle',{cx:X(p.x).toFixed(1),cy:Y(p.y).toFixed(1),r:4,fill:'#7b4bb7'}));
+  }
   // 年齢の目もり：はじめ・年金・おわり（重なるものは出さない）
   const ticks=[x0, clampPA(data.money.pensionAge), x1].filter((v,i,arr)=>v>=x0&&v<=x1&&arr.findIndex(w=>Math.abs(X(w)-X(v))<24)===i);
   ticks.forEach((v,i)=>el('text',{x:X(v),y:H-6,'text-anchor':'middle'},(i===0?Math.floor(v):Math.round(v))+'歳'));
@@ -578,6 +697,7 @@ function renderChart(box){
   item('', parseYmd(data.retireDate)?'退職の日に辞めた場合':'いま辞めた場合');
   if(B) item('b', jpDate(data.cmp.date)+'に辞めた場合');
   if(num(data.money.reserve)>0) item('r','もしもの予備');
+  if((data.actuals||[]).length) item('a','実際に記録した資産');
   box.append(lg);
   const n=document.createElement('div'); n.className='note'+(A.zero!=null?' warn':''); n.textContent='📈 '+lifeText(A);
   if(B) n.textContent+=`\n📅 ${jpDate(data.cmp.date)}に辞めると：`+lifeText(B);
@@ -633,14 +753,74 @@ function renderProgress(){
     if(span>0 && gone>0){ const tp=Math.min(100,Math.round(gone/span*100)); if(tp>0) txt+=` ／ 時間は ${tp}% 進みました`; }
   }
   $('prgText').textContent=txt;
+  // きょうの一歩：期限がいちばん近い、終わっていないやることを1つだけ大きく出す
   const box=$('nextTodo'); box.textContent='';
   const next = sortedTodos().filter(x=>!x.done)[0];
-  if(next){ const n=document.createElement('div'); n.className='note'; n.textContent='つぎ： '+next.text+(dueOf(next)?`（${jpDate(dueOf(next))}まで）`:''); box.append(n); }
+  if(!next){ const n=document.createElement('div'); n.className='note'; n.textContent='やることは、ぜんぶ終わっています 🎉'; box.append(n); return; }
+  const wrap=document.createElement('div'); wrap.className='note'; wrap.style.marginTop='10px';
+  const ttl=document.createElement('div'); ttl.className='sub'; ttl.textContent='きょうの一歩';
+  const line=document.createElement('div'); line.style.cssText='font-weight:700;font-size:17px;margin:2px 0 4px'; line.textContent=next.text;
+  wrap.append(ttl, line);
+  const due=dueOf(next);
+  if(due){ const d=document.createElement('div'); const left=daysBetween(todayYmd(), due);
+    d.className='sub'; if(left<0) d.style.color='var(--warn)';
+    d.textContent = left<0 ? `${jpDate(due)}まで（${-left}日すぎています）` : left===0 ? 'きょうまで' : `${jpDate(due)}まで（あと${left}日）`;
+    wrap.append(d); }
+  const btns=document.createElement('div'); btns.className='add';
+  const ok=document.createElement('button'); ok.className='small'; ok.textContent='✓ できた';
+  ok.onclick=()=>{ next.done=true; next.doneAt=todayYmd(); save(); renderAll(); };
+  const go=document.createElement('button'); go.className='ghost small'; go.textContent='ほかも見る';
+  go.onclick=()=>document.querySelector('nav button[data-tab="todo"]').click();
+  btns.append(ok, go); wrap.append(btns);
+  box.append(wrap);
 }
-function renderHomeDay(){
-  const ol=$('homeDay'); ol.textContent='';
-  if(!data.day.length){ const li=document.createElement('li'); li.className='empty'; li.textContent='「理想の1日」タブで書けます。'; ol.append(li); return; }
-  for(const s of data.day){ const li=document.createElement('li'); li.textContent=s; ol.append(li); }
+// ---------- きょうの ならし運転 ----------
+function todayLog(){ return data.log[todayYmd()] || []; }
+function toggleHabit(id){
+  const d=todayYmd(), arr=data.log[d]||[];
+  const i=arr.indexOf(id);
+  if(i<0) arr.push(id); else arr.splice(i,1);
+  if(arr.length) data.log[d]=arr; else delete data.log[d];
+  save(); renderHabit();
+}
+// 直近7日（きょうを含む）でできた日
+function last7(id){
+  const days=[];
+  for(let k=6;k>=0;k--){ const d=addDays(todayYmd(), -k); days.push((data.log[d]||[]).includes(id)); }
+  return days;
+}
+function renderHabit(){
+  const list=$('habitList'), foot=$('habitFoot'); list.textContent=''; foot.textContent='';
+  if(!data.day.length){ const p=document.createElement('div'); p.className='empty'; p.textContent='「理想の1日」タブに書くと、ここに出ます。'; list.append(p); return; }
+  const done=todayLog();
+  for(const it of data.day){
+    const on=done.includes(it.id);
+    const b=document.createElement('button'); b.className='hb'+(on?' on':''); b.setAttribute('aria-pressed', on?'true':'false');
+    const mk=document.createElement('span'); mk.className='mark'; mk.textContent='✓';
+    const t=document.createElement('span'); t.className='t'; t.textContent=it.text;
+    const days=last7(it.id), n=days.filter(Boolean).length;
+    const right=document.createElement('span'); right.className='week'; right.textContent=`今週 ${n}日`;
+    const dots=document.createElement('span'); dots.className='week7';
+    for(const d of days){ const i=document.createElement('i'); if(d) i.className='d'; dots.append(i); }
+    const box=document.createElement('span'); box.style.cssText='display:flex;flex-direction:column;align-items:flex-end';
+    box.append(right, dots);
+    b.append(mk, t, box);
+    b.onclick=()=>toggleHabit(it.id);
+    list.append(b);
+  }
+  const n=data.day.filter(it=>done.includes(it.id)).length;
+  const msg=document.createElement('div'); msg.className='note';
+  msg.textContent = n===0 ? 'まだ今日の分はありません。ひとつだけでも押してみてください。'
+    : n===data.day.length ? `きょうは ${n}件ぜんぶできました 🎉`
+    : `きょうは ${n} / ${data.day.length} 件できました。`;
+  foot.append(msg);
+  // 記録がたまってきたら控えをうながす
+  const days=Object.keys(data.log).length;
+  if(days>=7 && (!data.lastBackup || daysBetween(data.lastBackup, todayYmd())>30)){
+    const w=document.createElement('div'); w.className='note warn'; w.style.marginTop='8px';
+    w.textContent=`🔒 ${days}日ぶんの記録がたまりました。消えると戻せないので、「設定 → データの控え」で控えを取っておきましょう。`;
+    foot.append(w);
+  }
 }
 
 // ---------- やること ----------
@@ -700,10 +880,44 @@ function fillMoney(){
   if(['otherIn','work','reserve','tax','oneTime','age'].some(k=>m[k]!==''&&m[k]!=null) || num(m.pensionAge)!==65 || num(m.lifeAge)!==90 || num(m.infl)>0) $('moreBox').open=true;
 }
 
+// ---------- これまでの記録（30日） ----------
+function renderDayStats(){
+  const box=$('dayStats'); box.textContent='';
+  const days=Object.keys(data.log||{}).length;
+  if(!days){ const p=document.createElement('div'); p.className='empty'; p.textContent='ホーム画面で押すと、ここに「30日で何回できたか」が出ます。'; box.append(p); return; }
+  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:15px';
+  for(const it of data.day){
+    let n=0; for(let k=0;k<30;k++) if((data.log[addDays(todayYmd(),-k)]||[]).includes(it.id)) n++;
+    const a=document.createElement('div'); a.textContent=it.text;
+    const b=document.createElement('div'); b.textContent=`${n}日 / 30日`; b.style.cssText='text-align:right;font-weight:700'+(n>=15?';color:var(--main)':'');
+    grid.append(a,b);
+  }
+  box.append(grid);
+  const s=document.createElement('div'); s.className='sub'; s.style.marginTop='8px';
+  s.textContent=`記録をつけた日：${days}日ぶん（180日をこえた分は消えます）`;
+  box.append(s);
+}
+
 // ---------- 理想の1日 ----------
 $('daySave').onclick=()=>{
-  data.day=$('dayText').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,30);
-  save(); renderHomeDay(); $('daySaved').textContent='保存しました ✓'; setTimeout(()=>$('daySaved').textContent='',2000);
+  // 同じ文の行は番号を引き継ぐ（記録が続くように）。新しい行には新しい番号をつける
+  const old=data.day.slice(), used=new Set();
+  const lines=$('dayText').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,30);
+  // ①同じ文の行は番号をそのまま引き継ぐ
+  const out=lines.map(text=>{
+    const hit=old.find(x=>x.text===text && !used.has(x.id));
+    if(hit){ used.add(hit.id); return {id:hit.id, text}; }
+    return {id:null, text};
+  });
+  // ②書き直した行は、同じ場所にあった行の番号を引き継ぐ（記録が続く）
+  out.forEach((it,i)=>{
+    if(it.id!=null) return;
+    const o=old[i];
+    if(o && !used.has(o.id)){ used.add(o.id); it.id=o.id; }
+    else it.id=data.nextDayId++;
+  });
+  data.day=out;
+  save(); renderHabit(); renderDayStats(); $('daySaved').textContent='保存しました ✓'; setTimeout(()=>$('daySaved').textContent='',2000);
 };
 
 // ---------- 設定 ----------
@@ -721,14 +935,15 @@ $('dateClear').onclick=()=>{
 
 // ---------- 控え ----------
 function backupText(){ return JSON.stringify({app:'taishoku-note', ver:VERSION, savedAt:new Date().toISOString(), data}); }
+function markBackup(){ data.lastBackup=todayYmd(); save(); renderHabit(); }
 $('bkFile').onclick=()=>{
   const blob=new Blob([backupText()],{type:'application/json'}), a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download='つぎの暮らしノート_控え_'+todayYmd()+'.json'; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000); $('bkMsg').textContent='ファイルに保存しました（ダウンロードの中にあります）。';
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000); $('bkMsg').textContent='ファイルに保存しました（ダウンロードの中にあります）。'; markBackup();
 };
 $('bkCopy').onclick=async()=>{
   const t=backupText(); $('bkText').value=t;
-  try{ await navigator.clipboard.writeText(t); $('bkMsg').textContent='コピーしました。メモ帳などに貼って残してください。'; }
+  try{ await navigator.clipboard.writeText(t); $('bkMsg').textContent='コピーしました。メモ帳などに貼って残してください。'; markBackup(); }
   catch(e){ $('bkMsg').textContent='自動コピーできませんでした。上の枠の文字を長押ししてコピーしてください。'; }
 };
 // 関所：形のおかしい控えは読まずに、いまの記録を残す
@@ -746,7 +961,24 @@ function applyBackup(text){
     todos: d.todos.filter(x=>x&&typeof x.text==='string'&&x.text.trim()).map((x,i)=>({
       id: Number(x.id)||Date.now()+i, text:String(x.text).slice(0,100),
       due: parseYmd(x.due)?x.due:'', rel: Number.isInteger(x.rel)?x.rel:undefined, done:!!x.done, doneAt: parseYmd(x.doneAt)?x.doneAt:'' })),
-    day: d.day.filter(s=>typeof s==='string').map(s=>s.slice(0,100)).slice(0,30) };
+    // 古い控え（文字の並び）も、新しい控え（番号つき）も読めるようにする
+    day: d.day.map((x,i)=> typeof x==='string' ? {id:i+1, text:x.slice(0,100)}
+        : (x && typeof x.text==='string' ? {id:Number(x.id)||i+1, text:String(x.text).slice(0,100)} : null))
+      .filter(x=>x && x.text.trim()).slice(0,30),
+    log: {}, nextDayId: 1, lastBackup: parseYmd(d.lastBackup)?d.lastBackup:'',
+    actuals: Array.isArray(d.actuals)
+      ? d.actuals.filter(x=>x && parseYmd(x.date) && isFinite(Number(x.amt))).map(x=>({date:x.date, amt:Number(x.amt)})).slice(-120)
+      : [] };
+  // ならし運転の記録：日付の形と番号だけを通す
+  if(d.log && typeof d.log==='object' && !Array.isArray(d.log)){
+    for(const [day,ids] of Object.entries(d.log)){
+      if(!parseYmd(day) || !Array.isArray(ids)) continue;
+      const list=ids.filter(v=>Number.isInteger(v));
+      if(list.length) data.log[day]=list;
+    }
+  }
+  const ids=[...data.day.map(x=>x.id), ...Object.values(data.log).flat()].filter(Number.isInteger);
+  data.nextDayId=Math.max(0,...ids)+1;
   for(const k of Object.keys(b.money)){ const v=d.money&&d.money[k];
     if(k==='birth'){ data.money.birth = /^\d{4}-\d{2}$/.test(v||'')?v:''; continue; }
     if(k==='job'){ data.money.job = JOBS.includes(v)?v:''; continue; }
@@ -892,8 +1124,8 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   window.scrollTo(0,0);
 });
 
-function fillAll(){ fillMoney(); $('dayText').value=data.day.join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
-function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHomeDay(); renderMoney(); renderCompare(); renderTodos(); }
+function fillAll(){ fillMoney(); $('dayText').value=data.day.map(x=>x.text).join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
+function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHabit(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); }
 
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
