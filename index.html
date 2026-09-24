@@ -106,10 +106,12 @@ section{display:none}section.on{display:block}
   <div class="card" id="welcome" hidden>
     <h2>ようこそ 🌅</h2>
     <div>退職の前後の<b>お金</b>と<b>準備</b>を、1か所で見るノートです。</div>
+    <div class="sub" style="margin-top:8px">この順に進むと、3分くらいで形になります。</div>
     <ol style="margin:8px 0;padding-left:22px">
-      <li>「設定」で退職の日を入れる（未定のままでも使えます）</li>
-      <li>「お金」で数字を入れると、足りるかどうかが出ます</li>
-      <li>「やること」に、退職の前後の手続きが入っています</li>
+      <li><b>退職の日</b>を入れる（「設定」）。決まっていなければ「未定」のままで大丈夫です</li>
+      <li><b>お金の数字</b>を入れる（「お金」）。生まれた年月・資産・手取り・生活費の4つから始められます</li>
+      <li><b>やること</b>を見る。健康保険や年金の手続きが、期限つきで入っています</li>
+      <li>毎日は<b>ホーム</b>だけ見ればOK。「きょうの一歩」と「ならし運転」を押すだけです</li>
     </ol>
     <div class="note">🔒 入れた数字や記録は、この端末の中だけに保存されます。作った人にも、だれにも送られません（「相談」でAIに送ると決めたときだけ、Googleに送ります）。</div>
     <div style="margin-top:10px"><button id="welcomeOk">はじめる</button></div>
@@ -119,15 +121,18 @@ section{display:none}section.on{display:block}
     <div class="big" id="cdDays">–</div>
     <div class="sub" id="cdDetail"></div>
   </div>
+  <div class="card" id="setupCard" hidden>
+    <h2>つぎにやること</h2>
+    <div id="setupList"></div>
+  </div>
   <div class="card">
-    <h2>準備の進みぐあい</h2>
-    <div class="bar"><i id="prgBar" style="width:0"></i></div>
-    <div class="sub" id="prgText"></div>
+    <h2>きょうの一歩</h2>
+    <div class="sub">退職の前後の手続きから、期限がいちばん近いものを1つだけ出します。</div>
     <div id="nextTodo"></div>
   </div>
   <div class="card" id="habitCard">
     <h2>きょうの ならし運転</h2>
-    <div class="sub">「理想の1日」を、いまのうちから少しずつ。できたら押すだけです。</div>
+    <div class="sub">退職してから急に「理想の1日」は始められません。いまのうちから少しずつ試して、できた日を押しておきます。</div>
     <div id="streak"></div>
     <div id="habitList"></div>
     <div id="habitFoot"></div>
@@ -155,10 +160,11 @@ section{display:none}section.on{display:block}
     <label class="f">生まれた年と月</label>
     <input type="month" data-m="birth">
     <div class="sub" id="ageNote"></div>
-    <label class="f">いまの資産（貯金・投資などの合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
+    <label class="f">いまの資産（貯金・投資などの合計。ローンがあれば引いた額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
     <label class="f">いまの手取り（ひと月・家族の合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="income"><span>万円/月</span></div>
     <div class="sub" id="saveNote">退職の日までの間、「手取り − 生活費」がたまっていく計算にします。ボーナスも足して12で割ると、より近い数字になります。</div>
-    <label class="f">ひと月の生活費</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
+    <label class="f">ひと月の生活費（家ぜんたい）</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
+    <div class="sub">食費・光熱費・通信費・保険・車など、毎月出ていくお金の合計です。家賃や住宅ローンがあれば、それも入れてください。</div>
     <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension"><span>万円/月</span></div>
     <details class="sub" style="margin-top:4px"><summary>年金の額はどこで分かる？</summary>
       毎年誕生月に届く「ねんきん定期便」か、ネットの「ねんきんネット」で分かります。50歳以上は「このまま働いた場合の見込み額」、50歳未満は「これまでの加入実績の額」が書かれています（50歳未満の額は実際より少なめに出ます）。年額なので12で割って入れてください。</details>
@@ -170,7 +176,8 @@ section{display:none}section.on{display:block}
     <summary style="font-weight:700;cursor:pointer">くわしく入れる（入れるとより正確に）</summary>
     <label class="f">そのほか入ってくるお金（失業給付・企業年金の一時金など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="otherIn"><span>万円</span></div>
     <label class="f">退職後に働いて得るお金（給与・パート代など。年金が始まるまで・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="work"><span>万円/月</span></div>
-    <label class="f">もしもの予備</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
+    <label class="f">もしもの予備（手をつけずに残しておきたい額）</label><div class="unit"><input type="number" inputmode="decimal" data-m="reserve"><span>万円</span></div>
+    <div class="sub">病気や介護、家の修理などに備えて、最後まで残しておきたい額です。グラフの赤い点線になります。</div>
     <label class="f">退職翌年の住民税</label><div class="unit"><input type="number" inputmode="decimal" data-m="tax"><span>万円</span></div>
     <label class="f">そのほか一度だけ出るお金（車・家の修理など）</label><div class="unit"><input type="number" inputmode="decimal" data-m="oneTime"><span>万円</span></div>
     <label class="f">年金を受け取りはじめる年齢（60〜75歳）</label><div class="unit"><input type="number" inputmode="numeric" min="60" max="75" data-m="pensionAge"><span>歳</span></div>
@@ -218,8 +225,10 @@ section{display:none}section.on{display:block}
 <section id="todo">
   <div class="card">
     <h2>準備のみち</h2>
-    <div class="sub">やることが1つ終わるたびに、コマが1マス進みます。</div>
+    <div class="sub">やることが1つ終わるたびに、コマ（🚶）が1マス進みます。ゴール（🏁）は退職の日です。</div>
     <div id="board"></div>
+    <div class="bar" style="margin-top:12px"><i id="prgBar" style="width:0"></i></div>
+    <div class="sub" id="prgText"></div>
   </div>
   <div class="card">
     <h2>退職の前後にやること</h2>
@@ -269,7 +278,7 @@ section{display:none}section.on{display:block}
   </div>
   <div class="card">
     <h2>この4週間</h2>
-    <div class="sub">できた日を塗っていきます。色が濃いほど、その日にできた数が多い日です。</div>
+    <div class="sub">できた日を塗っていきます。色が濃いほど、その日にできた数が多い日です。枠が付いているのが今日です。全部を毎日できなくてかまいません。塗れた日が少しずつ増えれば十分です。</div>
     <div id="cal"></div>
   </div>
   <div class="card">
@@ -331,7 +340,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v3.1';
+const VERSION = 'v3.2';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -527,6 +536,9 @@ function renderAgeNote(){
 function renderMoney(){
   const m=data.money, box=$('moneyResult'); box.textContent='';
   const h=document.createElement('h2'); h.textContent='足りるかどうか'; box.append(h);
+  const lead=document.createElement('div'); lead.className='sub';
+  lead.textContent=`退職してから${num(m.lifeAge)||90}歳までに出ていくお金と、入ってくるお金を足し引きして、いまの資産で足りるかを見ます。`;
+  box.append(lead);
   renderAgeNote(); renderSaveNote(); renderPenNote(); renderPenCompare(); renderActuals();
   if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下の「'+missing(m).join('」「')+'」を入れると計算します。年金と退職金も入れると、より正確になります。'; box.append(p); return; }
   const c=calc(m), up=calc(m, num(m.living)+1), infl=num(m.infl)>0;
@@ -541,9 +553,15 @@ function renderMoney(){
   const pre=preSave(m);
   if(Math.abs(pre)>=1) rows.push([pre>0?'退職までに貯まるお金':'退職までに減るお金', (pre>0?'−':'+')+man(Math.abs(pre))]);
   for(const [a,b] of rows){ const r=document.createElement('div'); r.className='row'; const s=document.createElement('span'); s.textContent=a; const v=document.createElement('b'); v.textContent=b; r.append(s,v); box.append(r); }
+  const read=document.createElement('details'); read.className='sub'; read.style.margin='6px 0';
+  read.innerHTML='<summary>この表の読み方</summary>'
+    +'<div style="margin-top:6px">上の4行が<b>出ていくお金</b>、−が付いた行が<b>入ってくるお金</b>です。'
+    +'その合計が「必要なお金」。それを、いまの資産でまかなえるかを見たのが「余白」です。'
+    +'＋なら足りる見込み、−なら足りない見込みです。</div>';
+  box.append(read);
   const tot=document.createElement('div'); tot.className='row'; tot.innerHTML='<span>必要なお金</span>'; const tb=document.createElement('b'); tb.textContent=man(c.need); tot.append(tb); box.append(tot);
   const big=document.createElement('div'); big.style.marginTop='10px';
-  big.innerHTML='<div class="sub">いまの資産との差（余白）</div>';
+  big.innerHTML='<div class="sub">いまの資産との差（余白）＝ 足りる分／足りない分</div>';
   const bv=document.createElement('div'); bv.className='big '+(c.margin>=0?'plus':'minus'); bv.style.fontSize='40px'; bv.textContent=(c.margin>=0?'+':'')+man(c.margin);
   big.append(bv); box.append(big);
   renderChart(box);
@@ -798,6 +816,28 @@ function renderProgress(){
   btns.append(ok, go); wrap.append(btns);
   box.append(wrap);
 }
+// ---------- つぎにやること（まだ入れていないものだけ案内する） ----------
+function renderSetup(){
+  const box=$('setupList'), m=data.money, todo=[];
+  box.textContent='';
+  if(!parseYmd(data.retireDate) && !birthOk(m)) todo.push(['退職の日を入れる（未定でもOK）','set',null]);
+  const miss=missing(m);
+  if(miss.length) todo.push(['お金の数字を入れる（'+miss.join('・')+'）','money','income']);
+  else if(!(num(m.pension)>0)) todo.push(['年金の見込み額を入れると、もっと正確になります','money','pension']);
+  else if(!(num(m.income)>0) && parseYmd(data.retireDate)) todo.push(['いまの手取りを入れると、退職までに貯まる分が出ます','money','income']);
+  if(!data.day.length) todo.push(['「理想の1日」を書く','day',null]);
+  $('setupCard').hidden = todo.length===0;
+  for(const [text,tab,field] of todo){
+    const b=document.createElement('button'); b.className='ghost'; b.style.cssText='display:block;width:100%;text-align:left;margin:6px 0';
+    b.textContent='→ '+text;
+    b.onclick=()=>{
+      document.querySelector(`nav button[data-tab="${tab}"]`).click();
+      if(field){ const el=document.querySelector(`[data-m="${field}"]`); if(el){ el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); } }
+    };
+    box.append(b);
+  }
+}
+
 // ---------- きょうの ならし運転 ----------
 function todayLog(){ return data.log[todayYmd()] || []; }
 function toggleHabit(id){
@@ -833,7 +873,8 @@ function renderStreak(){
   const t=document.createElement('span'); t.textContent = s.cur ? (s.todayDone?'つづいています':'つづいています（きょう押すと、あしたにつながります）') : 'とぎれています';
   line.append(em,n,t); box.append(line);
   const sub=document.createElement('div'); sub.className='sub';
-  sub.textContent = `いちばん長かったのは ${s.best}日`+(s.cur&&s.cur>=s.best?'（いま更新中！）':'');
+  sub.textContent = `いちばん長かったのは ${s.best}日`+(s.cur&&s.cur>=s.best?'（いま更新中！）':'')
+    +'。1日にひとつ押せば、その日は「できた日」です。';
   box.append(sub);
 }
 // この4週間のカレンダー（日曜はじまり）
@@ -957,7 +998,7 @@ $('todoText').addEventListener('keydown',e=>{ if(e.key==='Enter') $('todoAdd').c
 document.querySelectorAll('[data-m]').forEach(inp=>{
   inp.addEventListener('input',()=>{ const k=inp.dataset.m, v=inp.value.trim();
     data.money[k] = k==='birth' ? (/^\d{4}-\d{2}$/.test(v)?v:'') : k==='job' ? (JOBS.includes(v)?v:'') : (v===''?'':Number(v));
-    save(); renderMoney(); renderHomeMoney(); renderCompare(); });
+    save(); renderMoney(); renderHomeMoney(); renderCompare(); renderSetup(); });
 });
 document.querySelectorAll('[data-c]').forEach(inp=>{
   inp.addEventListener('input',()=>{ const k=inp.dataset.c, v=inp.value.trim();
@@ -985,7 +1026,7 @@ function renderDayStats(){
   }
   box.append(grid);
   const s=document.createElement('div'); s.className='sub'; s.style.marginTop='8px';
-  s.textContent=`記録をつけた日：${days}日ぶん（180日をこえた分は消えます）`;
+  s.textContent=`記録をつけた日：${days}日ぶん。30日のうち15日をこえた行は、緑の文字になります（180日より古い記録は消えます）。`;
   box.append(s);
 }
 
@@ -1008,7 +1049,7 @@ $('daySave').onclick=()=>{
     else it.id=data.nextDayId++;
   });
   data.day=out;
-  save(); renderHabit(); renderDayStats(); $('daySaved').textContent='保存しました ✓'; setTimeout(()=>$('daySaved').textContent='',2000);
+  save(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderSetup(); $('daySaved').textContent='保存しました ✓'; setTimeout(()=>$('daySaved').textContent='',2000);
 };
 
 // ---------- 設定 ----------
@@ -1216,7 +1257,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 });
 
 function fillAll(){ fillMoney(); $('dayText').value=data.day.map(x=>x.text).join('\n'); $('retireDate').value=data.retireDate||''; $('startDate').value=data.startDate||''; }
-function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderProgress(); renderHomeMoney(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); renderBoard(); }
+function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKeyState(); renderCountdown(); renderSetup(); renderProgress(); renderHomeMoney(); renderHabit(); renderStreak(); renderCal(); renderDayStats(); renderMoney(); renderCompare(); renderTodos(); renderBoard(); }
 
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
