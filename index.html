@@ -115,11 +115,11 @@ section{display:none}section.on{display:block}
     <h2>まずはこれだけ（単位：万円）</h2>
     <div class="sub">入れた数字はこの端末の中だけに保存されます。どこにも送りません。だいたいの数字でかまいません。</div>
     <details class="note" style="margin-top:10px"><summary style="font-weight:700;cursor:pointer">いまの給与（お給料・ボーナス）はどこに入れる？</summary>
-      <div style="margin-top:8px">この画面は「<b>退職の日から先</b>」のお金を見るところなので、毎月の給与を入れる欄はありません。退職の日まで働いて残るお金は「<b>いまの資産</b>」にふくめて考えます。</div>
-      <div style="margin-top:8px">給与を入れるのは、つぎの2つのときです。</div>
-      <div style="margin-top:8px">① <b>もう少し働いたらどうなるか</b>を見たいとき → 下の「もうひとつの日とくらべる」の「<b>働いている間の給与など（手取り・1年あたり）</b>」</div>
-      <div style="margin-top:8px">② <b>辞めたあとも働いて収入がある</b>とき → 「くわしく入れる」の「<b>退職後に働いて得るお金</b>」</div>
-      <div class="add"><button class="ghost small" id="goCmpIncome">①をひらく</button><button class="ghost small" id="goWorkIncome">②をひらく</button></div>
+      <div style="margin-top:8px">給与を入れる場所は、聞きたいことによって3つあります。</div>
+      <div style="margin-top:8px">① <b>いま働いている給与</b> → すぐ下の「<b>いまの手取り（ひと月）</b>」。退職の日までに貯まるお金を計算します。</div>
+      <div style="margin-top:8px">② <b>もう少し働いたらどうなるか</b>を見たいとき → 下の「もうひとつの日とくらべる」の「<b>働いている間の給与など（手取り・1年あたり）</b>」（空のままなら①の手取り×12で計算します）</div>
+      <div style="margin-top:8px">③ <b>辞めたあとも働いて収入がある</b>とき → 「くわしく入れる」の「<b>退職後に働いて得るお金</b>」</div>
+      <div class="add"><button class="ghost small" id="goNowIncome">①をひらく</button><button class="ghost small" id="goCmpIncome">②をひらく</button><button class="ghost small" id="goWorkIncome">③をひらく</button></div>
     </details>
     <label class="f">はたらき方</label>
     <select data-m="job" style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)">
@@ -129,6 +129,8 @@ section{display:none}section.on{display:block}
     <input type="month" data-m="birth">
     <div class="sub" id="ageNote"></div>
     <label class="f">いまの資産（貯金・投資などの合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="assets"><span>万円</span></div>
+    <label class="f">いまの手取り（ひと月・家族の合計）</label><div class="unit"><input type="number" inputmode="decimal" data-m="income"><span>万円/月</span></div>
+    <div class="sub" id="saveNote">退職の日までの間、「手取り − 生活費」がたまっていく計算にします。ボーナスも足して12で割ると、より近い数字になります。</div>
     <label class="f">ひと月の生活費</label><div class="unit"><input type="number" inputmode="decimal" data-m="living"><span>万円/月</span></div>
     <label class="f">年金（家族の合計・ひと月）</label><div class="unit"><input type="number" inputmode="decimal" data-m="pension"><span>万円/月</span></div>
     <details class="sub" style="margin-top:4px"><summary>年金の額はどこで分かる？</summary>
@@ -159,7 +161,7 @@ section{display:none}section.on{display:block}
     <div class="sub">退職の日がずれたら、余白がどう変わるかを並べます。</div>
     <label class="f">くらべる日（例：1年あと）</label>
     <input type="date" data-c="date">
-    <label class="f">働いている間の給与など（手取り・1年あたり）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
+    <label class="f">働いている間の給与など（手取り・1年あたり・空なら上の手取り×12）</label><div class="unit"><input type="number" inputmode="decimal" data-c="income"><span>万円/年</span></div>
     <div class="sub">いまの給与を入れるのはここです。ボーナスもふくめた、手取りの1年ぶんを入れてください（月の手取り×12＋ボーナスの手取り でだいたい出ます）。</div>
     <label class="f">その日に辞めたときの退職金・手取り（空なら上と同じ）</label><div class="unit"><input type="number" inputmode="decimal" data-c="severance"><span>万円</span></div>
     <div id="cmpResult" style="margin-top:12px"></div>
@@ -276,7 +278,7 @@ section{display:none}section.on{display:block}
 </nav>
 
 <script>
-const VERSION = 'v2.7';
+const VERSION = 'v2.8';
 const KEY = 'taishoku-note';
 const $ = id => document.getElementById(id);
 
@@ -316,7 +318,7 @@ const DEFAULT_DAY =['起きる','体を動かす','好きなことに打ちこ�
 
 function blank(){
   return { v:1, retireDate:'', startDate:todayYmd(),
-    money:{job:'',birth:'',assets:'',living:'',pension:'',severance:'',otherIn:'',work:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90,infl:0},
+    money:{job:'',birth:'',assets:'',income:'',living:'',pension:'',severance:'',otherIn:'',work:'',reserve:'',tax:'',oneTime:'',age:'',pensionAge:65,lifeAge:90,infl:0},
     cmp:{date:'',income:'',severance:''},
     todos: DEFAULT_TODOS.map(([t,rel],i)=>({id:Date.now()+i, text:t, due:'', rel, done:false, doneAt:''})),
     day: DEFAULT_DAY.slice() };
@@ -355,6 +357,15 @@ function pensionMonthly(m){ return num(m.pension)*pensionFactor(m.pensionAge); }
 function yearsToRetire(){ return parseYmd(data.retireDate) ? Math.max(0, daysBetween(todayYmd(), data.retireDate)/365.25) : 0; }
 function nowAge(){ return ageOf(data.money) - yearsToRetire(); }
 function lumpIn(m){ return num(m.severance)+num(m.otherIn)-num(m.tax)-num(m.oneTime); }
+// 退職の日までにたまるお金（いまの手取り − 生活費）。生活費は物価で上がっていく
+function preSave(m, livingOverride){
+  const income=num(m.income), y=yearsToRetire();
+  if(!(income>0) || y<=0) return 0;
+  const living = livingOverride!==undefined ? livingOverride : num(m.living), g=num(m.infl)/100;
+  let sum=0;
+  for(let x=0; x<y-1e-9; ){ const h=Math.min(1/12, y-x); sum += (income - living*Math.pow(1+g, x+h/2))*12*h; x+=h; }
+  return sum;
+}
 
 // 退職の日から「何歳まで」を1か月ずつ追いかける。calc もグラフもここを通る。
 //   年金まで：生活費 − 働いて得るお金
@@ -365,7 +376,7 @@ function run(m, opt){
   const living = opt.living!==undefined ? opt.living : num(m.living);
   const a=ageOf(m), p=clampPA(m.pensionAge), L=Math.max(a, num(m.lifeAge));
   const g=num(m.infl)/100, pg=Math.max(0,g-0.005), base=nowAge(), pen=pensionMonthly(m), work=num(m.work);
-  const A0 = opt.A0!==undefined ? opt.A0 : num(m.assets)+lumpIn(m);
+  const A0 = opt.A0!==undefined ? opt.A0 : num(m.assets)+lumpIn(m)+preSave(m, opt.living);
   const res=num(m.reserve), dt=1/12;
   let bridge=0, after=0, asset=A0, zero=null, under=res>0&&A0<res ? a : null;
   if(A0<0) zero=a;
@@ -390,7 +401,7 @@ function calc(m, livingOverride){
   const living = livingOverride!==undefined ? livingOverride : num(m.living);
   const bridgeMonthly = Math.max(0, living-num(m.work));  // 働いて得る分は生活費から引く（いまの値段で）
   const gapMonthly = Math.max(0, living-pensionMonthly(m));
-  const need = r.bridge + r.after + num(m.reserve) + num(m.tax) + num(m.oneTime) - num(m.severance) - num(m.otherIn);
+  const need = r.bridge + r.after + num(m.reserve) + num(m.tax) + num(m.oneTime) - num(m.severance) - num(m.otherIn) - preSave(m, livingOverride);
   return {bridgeYears:r.bridgeYears, afterYears:r.afterYears, bridgeMonthly, bridge:r.bridge, gapMonthly, after:r.after, need, margin:num(m.assets)-need};
 }
 function man(n){ const r=Math.round(n); return (r<0?'−':'')+Math.abs(r).toLocaleString('ja-JP')+'万円'; }
@@ -402,6 +413,15 @@ function missing(m){
   return L;
 }
 function moneyReady(m){ return missing(m).length===0; }
+function renderSaveNote(){
+  const m=data.money, el=$('saveNote'), base='退職の日までの間、「手取り − 生活費」がたまっていく計算にします。ボーナスも足して12で割ると、より近い数字になります。';
+  if(!(num(m.income)>0)){ el.textContent=base; return; }
+  if(!parseYmd(data.retireDate)){ el.textContent='退職の日が未定なので、この手取りはまだ計算に使っていません（「設定」で日を入れると使います）。'; return; }
+  const pre=preSave(m), md=monthsDays(todayYmd(), data.retireDate);
+  el.textContent = pre>=0
+    ? `退職の日まで あと${md.m}か月。この間に ${man(pre)} たまる計算です（生活費を引いたあと）。`
+    : `退職の日まで あと${md.m}か月。いまの手取りだと生活費のほうが多く、${man(-pre)} 減る計算です。`;
+}
 function renderPenNote(){
   const m=data.money, p=clampPA(m.pensionAge), f=pensionFactor(p);
   const t = p===65 ? '65歳が基準です。早めると1か月ごとに0.4%減り、遅らせると0.7%増えます。'
@@ -438,7 +458,7 @@ function renderAgeNote(){
 function renderMoney(){
   const m=data.money, box=$('moneyResult'); box.textContent='';
   const h=document.createElement('h2'); h.textContent='足りるかどうか'; box.append(h);
-  renderAgeNote(); renderPenNote(); renderPenCompare();
+  renderAgeNote(); renderSaveNote(); renderPenNote(); renderPenCompare();
   if(!moneyReady(m)){ const p=document.createElement('div'); p.className='empty'; p.textContent='下の「'+missing(m).join('」「')+'」を入れると計算します。年金と退職金も入れると、より正確になります。'; box.append(p); return; }
   const c=calc(m), up=calc(m, num(m.living)+1), infl=num(m.infl)>0;
   const rows=[
@@ -449,6 +469,8 @@ function renderMoney(){
     ['住民税・一度だけのお金', man(num(m.tax)+num(m.oneTime))],
     ['退職金・入ってくるお金', '−'+man(Math.abs(num(m.severance)+num(m.otherIn)))],
   ];
+  const pre=preSave(m);
+  if(Math.abs(pre)>=1) rows.push([pre>0?'退職までに貯まるお金':'退職までに減るお金', (pre>0?'−':'+')+man(Math.abs(pre))]);
   for(const [a,b] of rows){ const r=document.createElement('div'); r.className='row'; const s=document.createElement('span'); s.textContent=a; const v=document.createElement('b'); v.textContent=b; r.append(s,v); box.append(r); }
   const tot=document.createElement('div'); tot.className='row'; tot.innerHTML='<span>必要なお金</span>'; const tb=document.createElement('b'); tb.textContent=man(c.need); tot.append(tb); box.append(tot);
   const big=document.createElement('div'); big.style.marginTop='10px';
@@ -476,14 +498,16 @@ function compare(){
   if(!parseYmd(A)) return {msg:'「設定」で退職の日を入れると、くらべられます（未定のままだと起点がありません）。'};
   if(!parseYmd(B)) return {msg:'くらべる日を入れると、ここに並べて出します。'};
   if(!moneyReady(m)) return {msg:'上の「まずはこれだけ」を先に入れてください。'};
-  if(c.income==='' ) return {msg:'「働いている間の給与など（手取り・1年あたり）」を入れてください。いまの給与を入れるのはここです。'};
+  // 空なら「まずはこれだけ」の手取り（ひと月）×12 を使う
+  const income = c.income==='' ? (num(m.income)>0 ? num(m.income)*12 : '') : c.income;
+  if(income==='') return {msg:'「いまの手取り（ひと月）」か、下の「働いている間の給与など（手取り・1年あたり）」を入れてください。'};
   const y = daysBetween(A,B)/365.25;
   if(Math.abs(y)<1/365) return {msg:'2つの日が同じです。'};
   const a = calc(m);
   const ageA = ageOf(m);
   const mB = Object.assign({}, m, {ageOverride:ageA+y, severance: c.severance===''?m.severance:c.severance});
   const b = calc(mB);
-  const saved = (num(c.income)-num(m.living)*12)*y;  // 働いて残る（へる）ぶん
+  const saved = (num(income)-num(m.living)*12)*y;  // 働いて残る（へる）ぶん
   const marginB = num(m.assets)+saved-b.need;
   return {y, a, b, saved, marginA:a.margin, marginB, ageA, ageB:ageA+y, mB};
 }
@@ -515,7 +539,7 @@ function renderCompare(){
 // ---------- 資産の移りかわり（グラフ） ----------
 // run() の結果をそのまま使う。最後に残る額 − 予備 ＝ 余白（calc と一致）。
 function lifeA(){ return run(data.money); }
-function lifeB(r){ return run(r.mB, {A0: num(r.mB.assets)+r.saved+lumpIn(r.mB)}); }
+function lifeB(r){ return run(r.mB, {A0: num(r.mB.assets)+preSave(r.mB)+r.saved+lumpIn(r.mB)}); }
 function lifeText(l){
   const res=num(data.money.reserve);
   if(l.zero!=null) return `${Math.floor(l.zero)}歳ごろに資産が0になります。`;
@@ -776,7 +800,8 @@ function dataSummary(){
   if(m.job) L.push('はたらき方：'+m.job);
   // 生まれた年月そのものは送らず、計算した年齢だけを送る
   if(ageOf(m)>0) L.push((parseYmd(data.retireDate)?'退職するときの年齢：':'いまの年齢：')+Math.floor(ageOf(m))+'歳');
-  f('いまの資産','assets','万円'); f('ひと月の生活費','living','万円');
+  f('いまの資産','assets','万円'); f('いまの手取り（ひと月）','income','万円'); f('ひと月の生活費','living','万円');
+  if(num(m.income)>0 && parseYmd(data.retireDate)) L.push(`退職の日までにたまるお金：${man(preSave(m))}`);
   f('年金（家族の合計・ひと月・65歳からの額）','pension','万円');
   if(num(m.pension)>0) L.push(`年金を受け取りはじめる年齢：${clampPA(m.pensionAge)}歳（ひと月 ${pensionMonthly(m).toFixed(1)}万円）`);
   L.push('物価の上がり方：'+(num(m.infl)>0?`年${num(m.infl)}%で計算`:'考えない'));
@@ -873,6 +898,7 @@ function renderAll(){ $('welcome').hidden=!!data.welcomed; updateAiUI(); showKey
 load(); fillAll(); renderAll();
 // アドレスの最後に ?tab=money などを付けると、そのタブで開く
 { const t=new URLSearchParams(location.search).get('tab'); const b=t&&document.querySelector('nav button[data-tab="'+CSS.escape(t)+'"]'); if(b) b.click(); }
+$('goNowIncome').onclick=()=>{ const el=document.querySelector('[data-m="income"]'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.focus({preventScroll:true}); };
 $('goCmpIncome').onclick=()=>{ const el=document.querySelector('[data-c="income"]'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.focus({preventScroll:true}); };
 $('goWorkIncome').onclick=()=>{ $('moreBox').open=true; const el=document.querySelector('[data-m="work"]'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.focus({preventScroll:true}); };
 $('ver').textContent='つぎの暮らしノート '+VERSION+' ・ 記録はこの端末の中だけ';
