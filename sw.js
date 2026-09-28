@@ -1,21 +1,9 @@
-// 画面の部品だけを手元に置き、電波がなくても開けるようにする
-const CACHE = 'taishoku-note-v3.7';
-const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
-});
+// 引っこし用：古い版の一時保存を片づけて、この仕組み自体も外す
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
-});
-// ネットを先に見て、だめなら手元の控えを出す（直した版がすぐ届くように）
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request).then(r => {
-      const copy = r.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
-      return r;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+  e.waitUntil(
+    caches.keys()
+      .then(ks => Promise.all(ks.filter(k => /^taishoku-note-/.test(k)).map(k => caches.delete(k))))
+      .then(() => self.registration.unregister())
   );
 });
